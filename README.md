@@ -13,8 +13,11 @@ A modern React application built with TypeScript and Tailwind CSS.
 
 ### Install Dependencies
 
+First, install all required dependencies:
+
 ```bash
 npm install
+npm install @headlessui/react @heroicons/react
 ```
 
 ### Development
@@ -48,14 +51,26 @@ npm run preview
 ```
 wp-chatbot-admin/
 ├── src/
+│   ├── components/      # Reusable UI components
+│   │   ├── Button.tsx
+│   │   ├── Card.tsx
+│   │   ├── Input.tsx
+│   │   ├── Modal.tsx
+│   │   ├── ConfirmDialog.tsx
+│   │   ├── Toast.tsx
+│   │   ├── Header.tsx
+│   │   └── index.ts
+│   ├── pages/           # Page components
+│   │   ├── Options.tsx  # API configuration page
+│   │   └── Plans.tsx    # Plans management page
+│   ├── types/           # TypeScript type definitions
+│   │   └── plan.ts
 │   ├── App.tsx          # Main application component
 │   ├── main.tsx         # Application entry point
 │   └── index.css        # Global styles with Tailwind directives
 ├── index.html           # HTML entry point
 ├── vite.config.ts       # Vite configuration
 ├── tsconfig.json        # TypeScript configuration
-├── tailwind.config.js   # Tailwind CSS configuration
-├── postcss.config.js    # PostCSS configuration
 └── package.json         # Project dependencies and scripts
 ```
 
@@ -66,6 +81,11 @@ wp-chatbot-admin/
 - 📘 Type-safe with TypeScript
 - 🔥 Hot Module Replacement (HMR)
 - 🎯 Modern React 19 with hooks
+- 🎨 Headless UI components for accessible UI
+- 📊 WordPress-style admin dashboard
+- 🔐 API key management with validation
+- 🎭 Modern toast notifications
+- 📱 Fully responsive design
 
 ## License
 
