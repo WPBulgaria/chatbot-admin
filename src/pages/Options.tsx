@@ -1,80 +1,111 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../components/Card';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { Toast } from '../components/Toast';
 import { Switch } from '@headlessui/react';
+import type { Plan } from '../types/plan';
+import { now } from '../utils/time';
+import { flattenErrors } from '../utils/errors';
+import { ConfigsSchema, Configs} from '../types/configs';
+import { makeConfigsApi } from '../api/configs-api';
+import { useRouter } from '@tanstack/react-router';
 
-interface FormData {
+
+type Errors = {
+  general: string;
+  adminsOnly: string;
+  totalChats: string;
+  totalQuestions: string;
+  publicPlan: string;
+  defaultPlan: string;
   apiKey: string;
-  apiEndpoint: string;
-  enableLogs: boolean;
-  maxTokens: string;
 }
 
-export const Options: React.FC = () => {
-  const [formData, setFormData] = useState<FormData>({
-    apiKey: '',
-    apiEndpoint: 'https://api.openai.com/v1',
-    enableLogs: false,
-    maxTokens: '2000',
+export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs, plans = [] }) => {
+  const router = useRouter();
+  const [formData, setFormData] = useState<Configs>({
+    apiKey: "",
+    totalChats: 0,  
+    totalQuestions: 0,
+    adminsOnly: false,
+    publicPlan: "",
+    defaultPlan: "",
   });
 
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  useEffect(() => {
+
+    if (configs) {
+      setFormData({...configs});
+    }
+  }, [configs]);
+
+  const [errors, setErrors] = useState<Partial<Errors>>({});
   const [loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
   const [showApiKey, setShowApiKey] = useState(false);
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+  const handleInputChange = (field: keyof Errors, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
-  const handleToggleChange = (field: keyof FormData, value: boolean) => {
+  const handleToggleChange = (field: keyof Errors, value: boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
-
-    if (!formData.apiKey.trim()) {
-      newErrors.apiKey = 'API Key is required';
-    }
-
-    if (!formData.apiEndpoint.trim()) {
-      newErrors.apiEndpoint = 'API Endpoint is required';
-    } else if (!formData.apiEndpoint.startsWith('http')) {
-      newErrors.apiEndpoint = 'API Endpoint must be a valid URL';
-    }
-
-    if (!formData.maxTokens.trim()) {
-      newErrors.maxTokens = 'Max tokens is required';
-    } else if (isNaN(Number(formData.maxTokens)) || Number(formData.maxTokens) <= 0) {
-      newErrors.maxTokens = 'Max tokens must be a positive number';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSave = async () => {
-    if (!validateForm()) {
+    setErrors({});
+
+    const data: any = {
+      createdAt: now(),
+      ...configs,
+      ...formData,
+      totalChats: Number(formData.totalChats),
+      totalQuestions: Number(formData.totalQuestions),
+      modifiedAt: now(),
+    }
+
+
+    const result = ConfigsSchema.safeParse(data);
+    if (!result.success) {
+      setErrors(flattenErrors(result.error));
       return;
     }
+  
+    const newConfigs = result.data;
+
 
     setLoading(true);
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    setLoading(false);
-    setToastMessage('Settings saved successfully!');
-    setToastType('success');
-    setShowToast(true);
+    try {
+      const response = await makeConfigsApi().store(newConfigs);
+      if (!response.success) {
+        setErrors({ general: response.message.toString() || 'An error occurred while saving the configs' });
+        setToastMessage(response.message.toString() || 'An error occurred while saving the configs');
+        setToastType('error');
+        setShowToast(true);
+        return;
+      }
+      router.invalidate();
+      setToastMessage('Settings saved successfully!');
+      setToastType('success');
+      setShowToast(true);
+      setErrors({});
+      return;
+    } catch (error) {
+      setErrors({ general: error instanceof Error ? error.message : 'An error occurred while saving the configs' });
+      setToastMessage(error instanceof Error ? error.message : 'An error occurred while saving the configs');
+      setToastType('error');
+      setShowToast(true);
+      return;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleTestConnection = async () => {
@@ -94,18 +125,6 @@ export const Options: React.FC = () => {
     setShowToast(true);
   };
 
-  const handleReset = () => {
-    setFormData({
-      apiKey: '',
-      apiEndpoint: 'https://api.openai.com/v1',
-      enableLogs: false,
-      maxTokens: '2000',
-    });
-    setErrors({});
-    setToastMessage('Settings reset to defaults');
-    setToastType('info');
-    setShowToast(true);
-  };
 
   return (
     <div className="max-w-4xl">
@@ -149,22 +168,33 @@ export const Options: React.FC = () => {
                 )}
               </button>
             </div>
+          </div>
+        </Card>
 
+        <Card
+          title="Monthly Global Limits"
+          description="Set global usage limits for the chatbot"
+        >
+          <div className="grid grid-cols-2 gap-4">
             <Input
-              label="API Endpoint"
-              type="url"
-              value={formData.apiEndpoint}
-              onChange={(e) => handleInputChange('apiEndpoint', e.target.value)}
-              error={errors.apiEndpoint}
-              placeholder="https://api.openai.com/v1"
-              helperText="The base URL for API requests"
+              label="Total Chats"
+              type="number"
+              value={formData.totalChats}
+              onChange={(e) => handleInputChange('totalChats', e.target.value)}
+              error={errors.totalChats}
+              placeholder="10000"
+              helperText="Maximum total chats allowed"
             />
 
-            <div className="flex gap-3 pt-2">
-              <Button onClick={handleTestConnection} variant="secondary">
-                Test Connection
-              </Button>
-            </div>
+            <Input
+              label="Total Questions"
+              type="number"
+              value={formData.totalQuestions}
+              onChange={(e) => handleInputChange('totalQuestions', e.target.value)}
+              error={errors.totalQuestions}
+              placeholder="50000"
+              helperText="Maximum total questions allowed"
+            />
           </div>
         </Card>
 
@@ -173,49 +203,85 @@ export const Options: React.FC = () => {
           description="Configure advanced chatbot behavior"
         >
           <div className="space-y-5">
-            <Input
-              label="Max Tokens"
-              type="number"
-              value={formData.maxTokens}
-              onChange={(e) => handleInputChange('maxTokens', e.target.value)}
-              error={errors.maxTokens}
-              placeholder="2000"
-              helperText="Maximum number of tokens per response"
-            />
-
             <div className="flex items-center justify-between py-2">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700">
-                  Enable Logging
+                  Admin Only
                 </label>
                 <p className="mt-1 text-sm text-gray-500">
-                  Save conversation logs for debugging and analytics
+                  Restrict chatbot access to administrators only
                 </p>
               </div>
               <Switch
-                checked={formData.enableLogs}
-                onChange={(value) => handleToggleChange('enableLogs', value)}
+                checked={formData.adminsOnly}
+                onChange={(value) => handleToggleChange('adminsOnly', value)}
                 className={`${
-                  formData.enableLogs ? 'bg-blue-600' : 'bg-gray-200'
+                  formData.adminsOnly ? 'bg-blue-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
               >
                 <span
                   className={`${
-                    formData.enableLogs ? 'translate-x-6' : 'translate-x-1'
+                    formData.adminsOnly ? 'translate-x-6' : 'translate-x-1'
                   } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
               </Switch>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Public Plan
+              </label>
+              <select
+                value={formData.publicPlan}
+                onChange={(e) => handleInputChange('publicPlan', e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              >
+                <option value="">Select a plan</option>
+                {plans.map((plan) => (
+                  <option key={plan.id} value={plan.id}>
+                    {plan.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-sm text-gray-500">Plan available for public users</p>
+              {errors.publicPlan && (
+                <div className="text-red-500 text-sm">
+                  {errors.publicPlan}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Default Plan
+              </label>
+              <select
+                value={formData.defaultPlan}
+                onChange={(e) => handleInputChange('defaultPlan', e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              >
+                <option value="">Select a plan</option>
+                {plans.map((plan) => (
+                  <option key={plan.id} value={plan.id}>
+                    {plan.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-sm text-gray-500">Default plan assigned to new users</p>
+              {errors.defaultPlan && (
+                <div className="text-red-500 text-sm">
+                  {errors.defaultPlan}
+                </div>
+              )}
+            </div>
           </div>
         </Card>
-
+        {errors.general && (
+          <div className="text-red-500 text-sm">
+            {errors.general}
+          </div>
+        )}
         <div className="flex items-center justify-between pt-4">
-          <Button
-            onClick={handleReset}
-            variant="secondary"
-          >
-            Reset to Defaults
-          </Button>
           <Button
             onClick={handleSave}
             loading={loading}

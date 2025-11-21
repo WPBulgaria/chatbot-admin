@@ -6,8 +6,10 @@ A modern React application built with TypeScript and Tailwind CSS.
 
 - **React** 19.2.0 - Modern UI library
 - **TypeScript** 5.9.3 - Type-safe JavaScript
+- **TanStack Router** - Type-safe file-based routing
 - **Tailwind CSS** 4.1.17 - Utility-first CSS framework
 - **Vite** - Fast build tool and dev server
+- **Headless UI** - Accessible UI components
 
 ## Getting Started
 
@@ -51,6 +53,13 @@ npm run preview
 ```
 wp-chatbot-admin/
 ├── src/
+│   ├── routes/          # TanStack Router routes
+│   │   ├── __root.tsx   # Root layout
+│   │   ├── index.tsx    # Home route
+│   │   ├── dashboard.tsx
+│   │   ├── plans.tsx
+│   │   ├── options.tsx
+│   │   └── analytics.tsx
 │   ├── components/      # Reusable UI components
 │   │   ├── Button.tsx
 │   │   ├── Card.tsx
@@ -65,11 +74,12 @@ wp-chatbot-admin/
 │   │   └── Plans.tsx    # Plans management page
 │   ├── types/           # TypeScript type definitions
 │   │   └── plan.ts
-│   ├── App.tsx          # Main application component
+│   ├── routeTree.gen.ts # Auto-generated route tree
+│   ├── App.tsx          # Router provider
 │   ├── main.tsx         # Application entry point
 │   └── index.css        # Global styles with Tailwind directives
 ├── index.html           # HTML entry point
-├── vite.config.ts       # Vite configuration
+├── vite.config.ts       # Vite + Router configuration
 ├── tsconfig.json        # TypeScript configuration
 └── package.json         # Project dependencies and scripts
 ```
@@ -81,11 +91,13 @@ wp-chatbot-admin/
 - 📘 Type-safe with TypeScript
 - 🔥 Hot Module Replacement (HMR)
 - 🎯 Modern React 19 with hooks
+- 🛣️ TanStack Router with file-based routing
 - 🎨 Headless UI components for accessible UI
 - 📊 WordPress-style admin dashboard
 - 🔐 API key management with validation
 - 🎭 Modern toast notifications
 - 📱 Fully responsive design
+- 🔗 Deep linking and browser history support
 
 ## License
 

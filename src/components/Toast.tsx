@@ -42,7 +42,7 @@ export const Toast: React.FC<ToastProps> = ({
   }, [show, onClose]);
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="fixed bottom-4 right-4 z-50">
       <Transition
         show={show}
         as={Fragment}

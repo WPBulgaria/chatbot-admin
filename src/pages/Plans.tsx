@@ -5,49 +5,28 @@ import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
 import { Toast } from '../components/Toast';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import type { Plan, CreatePlanInput } from '../types/plan';
+import type { Plan, PlanInput, PlanPeriod} from '../types/plan';
+import { PlanSchema } from '../types/plan';
+import { useRouter } from '@tanstack/react-router';
+import { makePlansApi } from '../api/plans-api';
+import { flattenErrors } from '../utils/errors';
+import { v4 as uuidv4 } from 'uuid';
+import { humanReadableTime, now } from '../utils/time';
 
-export const Plans: React.FC = () => {
-  const [plans, setPlans] = useState<Plan[]>([
-    {
-      id: '1',
-      name: 'Basic',
-      numberOfChats: 100,
-      numberOfQuestions: 1000,
-      questionSizeInWords: 50,
-      historyItemsLimit: 10,
-      createdAt: new Date('2025-01-15'),
-    },
-    {
-      id: '2',
-      name: 'Pro',
-      numberOfChats: 500,
-      numberOfQuestions: 5000,
-      questionSizeInWords: 100,
-      historyItemsLimit: 50,
-      createdAt: new Date('2025-01-20'),
-    },
-    {
-      id: '3',
-      name: 'Enterprise',
-      numberOfChats: -1,
-      numberOfQuestions: -1,
-      questionSizeInWords: 200,
-      historyItemsLimit: 100,
-      createdAt: new Date('2025-02-01'),
-    },
-  ]);
+
+export const Plans: React.FC<{ plans: Plan[] }> = ({ plans = [] }) => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
-  const [formData, setFormData] = useState<CreatePlanInput>({
+  const [formData, setFormData] = useState<PlanInput>({
     name: '',
-    numberOfChats: '',
-    numberOfQuestions: '',
-    questionSizeInWords: '',
-    historyItemsLimit: '',
+    totalChats: '0',
+    totalQuestions: '0',
+    questionSize: '0',
+    historySize: '0',
+    period: 'month',
   });
-  const [errors, setErrors] = useState<Partial<CreatePlanInput>>({});
+  const [errors, setErrors] = useState<Partial<PlanInput & {general?: string, planPeriod?: string}>>({});
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
@@ -56,15 +35,18 @@ export const Plans: React.FC = () => {
   const [planToDelete, setPlanToDelete] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  const router = useRouter();
+
   const handleOpenModal = () => {
     setEditingPlan(null);
     setIsModalOpen(true);
     setFormData({
       name: '',
-      numberOfChats: '',
-      numberOfQuestions: '',
-      questionSizeInWords: '',
-      historyItemsLimit: '',
+      totalChats: '0' as string,
+      totalQuestions: '0' as string,
+      questionSize: '0' as string,
+      historySize: '0' as string,
+      period: 'month',
     });
     setErrors({});
   };
@@ -73,10 +55,11 @@ export const Plans: React.FC = () => {
     setEditingPlan(plan);
     setFormData({
       name: plan.name,
-      numberOfChats: String(plan.numberOfChats),
-      numberOfQuestions: String(plan.numberOfQuestions),
-      questionSizeInWords: String(plan.questionSizeInWords),
-      historyItemsLimit: String(plan.historyItemsLimit),
+      totalChats: plan.totalChats?.toString(),
+      totalQuestions: plan.totalQuestions?.toString(),
+      questionSize: plan.questionSize?.toString(),
+      historySize: plan.historySize?.toString(),
+      period: plan.period,
     });
     setErrors({});
     setIsModalOpen(true);
@@ -87,92 +70,90 @@ export const Plans: React.FC = () => {
     setEditingPlan(null);
   };
 
-  const handleInputChange = (field: keyof CreatePlanInput, value: string) => {
+  const handleInputChange = (field: keyof PlanInput, value: string | PlanPeriod) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    if ((errors as Partial<PlanInput>)[field]) {
+      setErrors((prev) => ({ ...prev, [field as keyof PlanInput]: undefined }));
     }
   };
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<CreatePlanInput> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Plan name is required';
-    }
-
-    if (!formData.numberOfChats.trim()) {
-      newErrors.numberOfChats = 'Number of chats is required';
-    } else if (isNaN(Number(formData.numberOfChats))) {
-      newErrors.numberOfChats = 'Must be a valid number';
-    }
-
-    if (!formData.numberOfQuestions.trim()) {
-      newErrors.numberOfQuestions = 'Number of questions is required';
-    } else if (isNaN(Number(formData.numberOfQuestions))) {
-      newErrors.numberOfQuestions = 'Must be a valid number';
-    }
-
-    if (!formData.questionSizeInWords.trim()) {
-      newErrors.questionSizeInWords = 'Question size is required';
-    } else if (isNaN(Number(formData.questionSizeInWords)) || Number(formData.questionSizeInWords) <= 0) {
-      newErrors.questionSizeInWords = 'Must be a positive number';
-    }
-
-    if (!formData.historyItemsLimit.trim()) {
-      newErrors.historyItemsLimit = 'History items limit is required';
-    } else if (isNaN(Number(formData.historyItemsLimit)) || Number(formData.historyItemsLimit) <= 0) {
-      newErrors.historyItemsLimit = 'Must be a positive number';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleSavePlan = async () => {
-    if (!validateForm()) {
+    const newPlan: any = {
+      id: "",
+      createdAt: now(),
+     
+      ...plans.find((p) => p.id === editingPlan?.id),
+      ...formData,
+      totalChats: Number(formData.totalChats),
+      totalQuestions: Number(formData.totalQuestions),
+      questionSize: Number(formData.questionSize),
+      historySize: Number(formData.historySize),
+      updatedAt: now(),
+    } 
+    
+ 
+    const result = PlanSchema.safeParse(newPlan);
+    if (!result.success) {
+      setErrors(flattenErrors(result.error));
       return;
-    }
+    };
+    const plan = result.data;
 
     setLoading(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      if (editingPlan) {
+        // Update existing plan
+        const response = await makePlansApi().update(plan);
+        
+        if (!response.plan) {
+          console.log("error");
+          setErrors({ general: response.message.toString() || 'An error occurred while saving the configs' });
+          setToastMessage(response.message.toString() || 'An error occurred while saving the configs');
+          setToastType('error');
+          setShowToast(true);
+          return;
+        }
+        router.invalidate();
+        setToastMessage('Plan updated successfully!');  
+        setToastType('success');
+        setShowToast(true);
+        setIsModalOpen(false);
+        setEditingPlan(null);
+      } else {
+        // Create new plan
+        const response = await makePlansApi().post(plan);
 
-    if (editingPlan) {
-      // Update existing plan
-      const updatedPlan: Plan = {
-        ...editingPlan,
-        name: formData.name,
-        numberOfChats: Number(formData.numberOfChats),
-        numberOfQuestions: Number(formData.numberOfQuestions),
-        questionSizeInWords: Number(formData.questionSizeInWords),
-        historyItemsLimit: Number(formData.historyItemsLimit),
-      };
+        console.log(response);
+        return;
 
-      setPlans((prev) => prev.map((plan) => (plan.id === editingPlan.id ? updatedPlan : plan)));
-      setToastMessage('Plan updated successfully!');
-    } else {
-      // Create new plan
-      const newPlan: Plan = {
-        id: String(Date.now()),
-        name: formData.name,
-        numberOfChats: Number(formData.numberOfChats),
-        numberOfQuestions: Number(formData.numberOfQuestions),
-        questionSizeInWords: Number(formData.questionSizeInWords),
-        historyItemsLimit: Number(formData.historyItemsLimit),
-        createdAt: new Date(),
-      };
+        if (!response.plan) {
+          setErrors({ general: response.message.toString() || 'An error occurred while saving the plan' });
+          setToastMessage(response.message.toString() || 'An error occurred while saving the plan');
 
-      setPlans((prev) => [...prev, newPlan]);
-      setToastMessage('Plan added successfully!');
+          setToastType('error');
+          setShowToast(true);
+          return;
+        }
+
+        router.invalidate();
+        setToastMessage('Plan added successfully!');
+        setToastType('success');
+        setShowToast(true);
+        setIsModalOpen(false);
+        setEditingPlan(null);
+      }
+    } catch (error) {
+      setErrors({
+        general: 'An error occurred while saving the plan',
+      });
+      setToastType('error');
+      setShowToast(true);
+    } finally {
+      setLoading(false);
     }
 
-    setLoading(false);
-    setIsModalOpen(false);
-    setEditingPlan(null);
-    setToastType('success');
-    setShowToast(true);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -187,16 +168,32 @@ export const Plans: React.FC = () => {
 
     setDeleteLoading(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      const response = await makePlansApi().delete(planToDelete);
+      if (!response.success) {
+        setErrors({ general: response.message.toString() || 'An error occurred while saving the configs' });
+        setToastMessage(response.message.toString() || 'An error occurred while saving the configs');
+        setToastType('error');
+        setShowToast(true);
+        return;
+      }
 
-    setPlans((prev) => prev.filter((plan) => plan.id !== planToDelete));
-    setDeleteLoading(false);
-    setIsDeleteDialogOpen(false);
-    setPlanToDelete(null);
-    setToastMessage('Plan deleted successfully');
-    setToastType('success');
-    setShowToast(true);
+      router.invalidate();
+      setToastMessage('Plan deleted successfully');
+      setToastType('success');
+      setShowToast(true);
+    } catch (error) {
+      setErrors({
+        general: error instanceof Error ? error.message : 'An error occurred while deleting the plan',
+      });
+      setToastMessage(error instanceof Error ? error.message : 'An error occurred while deleting the plan');
+      setToastType('error');
+      setShowToast(true);
+    } finally {
+      setDeleteLoading(false);
+      setIsDeleteDialogOpen(false);
+      setPlanToDelete(null);
+    }
   };
 
   const handleDeleteCancel = () => {
@@ -209,6 +206,17 @@ export const Plans: React.FC = () => {
       return 'Unlimited';
     }
     return num.toLocaleString();
+  };
+
+  const formatPlanPeriod = (period: PlanPeriod): string => {
+    const periodLabels: Record<PlanPeriod, string> = {
+      month: 'Month',
+      year: 'Year',
+      week: 'Week', 
+      day: 'Day',
+      lifetime: 'Lifetime',
+    };
+    return periodLabels[period];
   };
 
   return (
@@ -237,6 +245,9 @@ export const Plans: React.FC = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Plan Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Period
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Chats
@@ -271,20 +282,23 @@ export const Plans: React.FC = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatNumber(plan.numberOfChats)}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {formatPlanPeriod(plan.period)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatNumber(plan.numberOfQuestions)}
+                    {formatNumber(plan.totalChats)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {plan.questionSizeInWords} words
+                    {formatNumber(plan.totalQuestions)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {plan.historyItemsLimit} items
+                    {formatNumber(plan.questionSize || -1)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {formatNumber(plan.historySize)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {plan.createdAt.toLocaleDateString()}
+                    {humanReadableTime(plan.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
@@ -298,7 +312,7 @@ export const Plans: React.FC = () => {
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleDeleteClick(plan.id)}
+                        onClick={() => handleDeleteClick(plan.id!)}
                         className="text-red-600 hover:text-red-800 transition-colors p-2 hover:bg-red-50 rounded-lg"
                         title="Delete plan"
                       >
@@ -332,18 +346,36 @@ export const Plans: React.FC = () => {
             type="text"
             value={formData.name}
             onChange={(e) => handleInputChange('name', e.target.value)}
-            error={errors.name}
+            error={errors.name as string}
             placeholder="e.g., Basic, Pro, Enterprise"
             helperText="A descriptive name for the plan"
           />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Plan Period
+            </label>
+            <select
+              value={formData.period}
+              onChange={(e) => handleInputChange('period', e.target.value as PlanPeriod)}
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          >
+              <option value="day">Daily</option>
+              <option value="week">Weekly</option>
+              <option value="month">Monthly</option>
+              <option value="year">Yearly</option>
+              <option value="lifetime">Lifetime</option>
+            </select>
+            <p className="mt-1.5 text-sm text-gray-500">Billing period for this plan</p>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Number of Chats"
               type="number"
-              value={formData.numberOfChats}
-              onChange={(e) => handleInputChange('numberOfChats', e.target.value)}
-              error={errors.numberOfChats}
+              value={formData.totalChats}
+              onChange={(e) => handleInputChange('totalChats', e.target.value)}
+              error={errors.totalChats}
               placeholder="100"
               helperText="Use -1 for unlimited"
             />
@@ -351,9 +383,9 @@ export const Plans: React.FC = () => {
             <Input
               label="Number of Questions"
               type="number"
-              value={formData.numberOfQuestions}
-              onChange={(e) => handleInputChange('numberOfQuestions', e.target.value)}
-              error={errors.numberOfQuestions}
+              value={formData.totalQuestions}
+              onChange={(e) => handleInputChange('totalQuestions', e.target.value)}
+              error={errors.totalQuestions}
               placeholder="1000"
               helperText="Use -1 for unlimited"
             />
@@ -363,9 +395,9 @@ export const Plans: React.FC = () => {
             <Input
               label="Question Size (words)"
               type="number"
-              value={formData.questionSizeInWords}
-              onChange={(e) => handleInputChange('questionSizeInWords', e.target.value)}
-              error={errors.questionSizeInWords}
+              value={formData.questionSize}
+              onChange={(e) => handleInputChange('questionSize', e.target.value)}
+              error={errors.questionSize}
               placeholder="50"
               helperText="Max words per question"
             />
@@ -373,14 +405,18 @@ export const Plans: React.FC = () => {
             <Input
               label="History Items Limit"
               type="number"
-              value={formData.historyItemsLimit}
-              onChange={(e) => handleInputChange('historyItemsLimit', e.target.value)}
-              error={errors.historyItemsLimit}
+              value={formData.historySize}
+              onChange={(e) => handleInputChange('historySize', e.target.value)}
+              error={errors.historySize}
               placeholder="10"
               helperText="Chat history items to store"
             />
           </div>
-
+          {errors.general && (
+            <div className="text-red-500 text-sm mt-2">
+              {errors.general}
+            </div>
+          )}
           <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
             <Button variant="secondary" onClick={handleCloseModal}>
               Cancel
@@ -389,6 +425,7 @@ export const Plans: React.FC = () => {
               {editingPlan ? 'Update Plan' : 'Add Plan'}
             </Button>
           </div>
+
         </div>
       </Modal>
 

@@ -36,9 +36,11 @@ Open `http://localhost:3039` in your browser.
 - **Form validation**
 
 ### 3. Navigation
+- **TanStack Router** for URL-based routing
 - Top navigation bar with menu links
-- Clean, horizontal layout
-- Smooth page transitions
+- Browser history support
+- Deep linking enabled
+- Type-safe navigation
 
 ## 🎨 Available Components
 
@@ -56,6 +58,13 @@ All components are in `src/components/`:
 
 ```
 src/
+├── routes/          # TanStack Router routes
+│   ├── __root.tsx   # Root layout
+│   ├── index.tsx    # Home (redirects to /plans)
+│   ├── dashboard.tsx
+│   ├── plans.tsx
+│   ├── options.tsx
+│   └── analytics.tsx
 ├── components/       # Reusable UI components
 │   ├── Button.tsx
 │   ├── Card.tsx
@@ -70,17 +79,20 @@ src/
 │   └── Options.tsx
 ├── types/           # TypeScript types
 │   └── plan.ts
-├── App.tsx          # Main layout
+├── routeTree.gen.ts # Auto-generated routes
+├── App.tsx          # Router provider
 ├── main.tsx         # Entry point
 └── index.css        # Tailwind directives
 ```
 
 ## 🎯 Key Files
 
+- **`src/routes/`** - Route definitions (TanStack Router)
 - **`src/pages/Plans.tsx`** - Plans management page
 - **`src/types/plan.ts`** - Plan data types
 - **`src/components/Modal.tsx`** - Modal dialog component
-- **`src/App.tsx`** - Main app with routing logic
+- **`src/App.tsx`** - Router provider
+- **`TANSTACK_ROUTER.md`** - Router documentation
 
 ## 💡 Tips
 
@@ -105,22 +117,30 @@ src/
 
 ## 🔧 Common Tasks
 
-### Adding a New Menu Item
+### Adding a New Route
 
-1. Edit `src/components/Header.tsx`:
+1. Create route file `src/routes/newpage.tsx`:
+```typescript
+import { createFileRoute } from '@tanstack/react-router';
+
+export const Route = createFileRoute('/newpage')({
+  component: NewPage,
+});
+
+function NewPage() {
+  return <div>New Page</div>;
+}
+```
+
+2. Add to navigation in `src/components/Header.tsx`:
 ```typescript
 const menuItems: MenuItem[] = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'newpage', label: 'New Page' },
-  // ... other items
+  // ... existing items
+  { path: '/newpage', label: 'New Page' },
 ];
 ```
 
-2. Edit `src/App.tsx`:
-```typescript
-case 'newpage':
-  return <NewPage />;
-```
+The route tree will auto-generate! See `TANSTACK_ROUTER.md` for details.
 
 ### Creating a New Page
 
