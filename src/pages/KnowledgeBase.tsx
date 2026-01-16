@@ -1,35 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { Toast } from '../components/Toast';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { v4 as uuidv4 } from 'uuid';
 import { humanReadableTime } from '../utils/time';
-import { now } from '../utils/time';
+import { makeFilesApi } from '../api/files-api';
+import type { KnowledgeBaseFile } from '../types/knowledge-base';
+import { useRouter } from '@tanstack/react-router';
+import {Input} from '@headlessui/react';
 
-type KnowledgeBaseFileRow = {
-  id: string;
-  name: string;
-  sizeBytes: number;
-  path: string;
-  uploader: string;
-  createdAt: string;
-};
-
-export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFileRow[] }> = ({ files = [] }) => {
-  const [tableFiles, setTableFiles] = useState<KnowledgeBaseFileRow[]>(files);
+export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFile[] }> = ({ files = [] }) => {
+  const [tableFiles, setTableFiles] = useState<KnowledgeBaseFile[]>(files);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
-
+  const router = useRouter();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadErrors, setUploadErrors] = useState<{ file?: string; general?: string }>({});
   const [uploadLoading, setUploadLoading] = useState(false);
-
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
-  const [fileToRemove, setFileToRemove] = useState<KnowledgeBaseFileRow | null>(null);
+  const [fileToRemove, setFileToRemove] = useState<KnowledgeBaseFile | null>(null);
   const [removeLoading, setRemoveLoading] = useState(false);
 
   useEffect(() => {
@@ -53,12 +46,10 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFileRow[] }> = ({ fil
 
   const handleBrowseFileChange = (file: File | null) => {
     setUploadFile(file);
-    if (uploadErrors.file) {
-      setUploadErrors((prev) => ({ ...prev, file: undefined }));
-    }
+    setUploadErrors({});
   };
 
-  const handleOpenRemoveDialog = (file: KnowledgeBaseFileRow) => {
+  const handleOpenRemoveDialog = (file: KnowledgeBaseFile) => {
     setFileToRemove(file);
     setIsRemoveDialogOpen(true);
   };
@@ -75,6 +66,14 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFileRow[] }> = ({ fil
 
     setRemoveLoading(true);
     try {
+      const response = await makeFilesApi().remove(fileToRemove.id);
+      if (!response.success) {
+        setToastType('error');
+        setToastMessage(response.message?.toString() || 'An error occurred while removing the file');
+        setShowToast(true);
+        return;
+      }
+      router.invalidate();
       setTableFiles((prev) => prev.filter((f) => f.id !== fileToRemove.id));
       setToastType('success');
       setToastMessage('File removed successfully');
@@ -103,22 +102,28 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFileRow[] }> = ({ fil
     setUploadLoading(true);
     try {
       const file = uploadFile!;
-      const newRow: KnowledgeBaseFileRow = {
-        id: uuidv4(),
-        name: file.name,
-        sizeBytes: file.size,
-        path: file.name,
-        uploader: 'Admin',
-        createdAt: now(),
-      };
 
-      setTableFiles((prev) => [newRow, ...prev]);
+
+      const response = await makeFilesApi().upload(file);
+
+      if (!response.success) {
+        setUploadErrors({ general: response.message?.toString() || 'An error occurred while uploading the file' });
+        setToastType('error');
+        setToastMessage(response.message?.toString() || 'An error occurred while uploading the file');
+        setShowToast(true);
+        return;
+      }
+
+
+      setTableFiles((prev) => [response.file!, ...prev]);
+      router.invalidate();
+
       setToastType('success');
       setToastMessage('File uploaded successfully');
       setShowToast(true);
       setIsUploadModalOpen(false);
-      setUploadFile(null);
       setUploadErrors({});
+      setUploadFile(null);
     } catch {
       setUploadErrors({ general: 'An error occurred while uploading the file' });
       setToastType('error');
@@ -126,6 +131,11 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFileRow[] }> = ({ fil
       setShowToast(true);
     } finally {
       setUploadLoading(false);
+      setUploadFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
     }
   };
 
@@ -212,15 +222,15 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFileRow[] }> = ({ fil
                         {file.name?.charAt(0)?.toUpperCase() || 'F'}
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{file.name}</div>
+                        <div className="truncate max-w-[150px] text-sm font-medium text-gray-900" title={file.name}>{file.name}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatBytes(file.sizeBytes)}
+                    {formatBytes(file.size)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600" title={file.path}>
-                    {truncateMiddle(file.path, 52)}
+                    {truncateMiddle(file.path, 30)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {file.uploader}
@@ -273,17 +283,14 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFileRow[] }> = ({ fil
       <Modal isOpen={isUploadModalOpen} onClose={handleCloseUploadModal} title="Upload File">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Browse File</label>
-            <input
+            <Input
+              ref={fileInputRef}
+              placeholder="Upload File"
               type="file"
-              onChange={(e) => handleBrowseFileChange(e.target.files?.[0] ?? null)}
+              accept="application/json, application/pdf, text/plain, text/csv, text/tab-separated-values, text/tsv, application/xml"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleBrowseFileChange(e.target.files?.[0] ?? null)}
               className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-200 file:text-gray-800 hover:file:bg-gray-300 focus:outline-none"
             />
-            {uploadFile && (
-              <p className="mt-1.5 text-sm text-gray-500">
-                Selected: <span className="font-medium text-gray-900">{uploadFile.name}</span>
-              </p>
-            )}
             {uploadErrors.file && <p className="mt-1.5 text-sm text-red-600">{uploadErrors.file}</p>}
           </div>
 
