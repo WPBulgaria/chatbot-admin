@@ -1,17 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { KnowledgeBase } from '../pages/KnowledgeBase';
-import { makePlansApi } from '../api/plans-api';
-import type { Plan } from '../types/plan';
+import type { KnowledgeBaseFile } from '../types/knowledge-base.ts';
 
 export const Route = createFileRoute('/knowledge-base')({
   loader: async () => {
-    const plansApi = makePlansApi();
-    const plans = await plansApi.get();
-    return plans as Plan[];
+    return [] as KnowledgeBaseFile[];
   },
   component: () => {
-    const plans = Route.useLoaderData();
-    return <KnowledgeBase plans={plans} />;
+    const files = Route.useLoaderData();
+    return <KnowledgeBase files={files} />;
   },
 });
 

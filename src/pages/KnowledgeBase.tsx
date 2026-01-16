@@ -1,215 +1,159 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
 import { Toast } from '../components/Toast';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import type { Plan, PlanInput, PlanPeriod } from '../types/plan';
-import { PlanSchema } from '../types/plan';
-import { useRouter } from '@tanstack/react-router';
-import { makePlansApi } from '../api/plans-api';
-import { flattenErrors } from '../utils/errors';
-import { humanReadableTime, now } from '../utils/time';
+import { v4 as uuidv4 } from 'uuid';
+import { humanReadableTime } from '../utils/time';
+import { now } from '../utils/time';
 
-export const KnowledgeBase: React.FC<{ plans: Plan[] }> = ({ plans = [] }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
-  const [formData, setFormData] = useState<PlanInput>({
-    name: '',
-    totalChats: '0',
-    totalQuestions: '0',
-    questionSize: '0',
-    historySize: '0',
-    period: 'month',
-  });
-  const [errors, setErrors] = useState<Partial<PlanInput & { general?: string; planPeriod?: string }>>(
-    {},
-  );
+type KnowledgeBaseFileRow = {
+  id: string;
+  name: string;
+  sizeBytes: number;
+  path: string;
+  uploader: string;
+  createdAt: string;
+};
+
+export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFileRow[] }> = ({ files = [] }) => {
+  const [tableFiles, setTableFiles] = useState<KnowledgeBaseFileRow[]>(files);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
-  const [loading, setLoading] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [planToDelete, setPlanToDelete] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const router = useRouter();
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadErrors, setUploadErrors] = useState<{ file?: string; general?: string }>({});
+  const [uploadLoading, setUploadLoading] = useState(false);
 
-  const handleOpenModal = () => {
-    setEditingPlan(null);
-    setIsModalOpen(true);
-    setFormData({
-      name: '',
-      totalChats: '0',
-      totalQuestions: '0',
-      questionSize: '0',
-      historySize: '0',
-      period: 'month',
-    });
-    setErrors({});
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+  const [fileToRemove, setFileToRemove] = useState<KnowledgeBaseFileRow | null>(null);
+  const [removeLoading, setRemoveLoading] = useState(false);
+
+  useEffect(() => {
+    if (files.length === 0) {
+      return;
+    }
+    setTableFiles(files);
+  }, [files]);
+
+  const handleOpenUploadModal = () => {
+    setUploadErrors({});
+    setUploadFile(null);
+    setIsUploadModalOpen(true);
   };
 
-  const handleEditPlan = (plan: Plan) => {
-    setEditingPlan(plan);
-    setFormData({
-      name: plan.name,
-      totalChats: plan.totalChats?.toString(),
-      totalQuestions: plan.totalQuestions?.toString(),
-      questionSize: plan.questionSize?.toString(),
-      historySize: plan.historySize?.toString(),
-      period: plan.period,
-    });
-    setErrors({});
-    setIsModalOpen(true);
+  const handleCloseUploadModal = () => {
+    setIsUploadModalOpen(false);
+    setUploadErrors({});
+    setUploadLoading(false);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingPlan(null);
-  };
-
-  const handleInputChange = (field: keyof PlanInput, value: string | PlanPeriod) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if ((errors as Partial<PlanInput>)[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
+  const handleBrowseFileChange = (file: File | null) => {
+    setUploadFile(file);
+    if (uploadErrors.file) {
+      setUploadErrors((prev) => ({ ...prev, file: undefined }));
     }
   };
 
-  const handleSavePlan = async () => {
-    const newPlan: any = {
-      id: '',
-      createdAt: now(),
-      ...plans.find((p) => p.id === editingPlan?.id),
-      ...formData,
-      totalChats: Number(formData.totalChats),
-      totalQuestions: Number(formData.totalQuestions),
-      questionSize: Number(formData.questionSize),
-      historySize: Number(formData.historySize),
-      updatedAt: now(),
-    };
+  const handleOpenRemoveDialog = (file: KnowledgeBaseFileRow) => {
+    setFileToRemove(file);
+    setIsRemoveDialogOpen(true);
+  };
 
-    const result = PlanSchema.safeParse(newPlan);
-    if (!result.success) {
-      setErrors(flattenErrors(result.error));
+  const handleCloseRemoveDialog = () => {
+    setIsRemoveDialogOpen(false);
+    setFileToRemove(null);
+  };
+
+  const handleRemoveConfirm = async () => {
+    if (!fileToRemove) {
       return;
     }
 
-    const plan = result.data;
-    setLoading(true);
-
+    setRemoveLoading(true);
     try {
-      if (editingPlan) {
-        const response = await makePlansApi().update(plan);
-
-        if (!response.plan) {
-          setErrors({
-            general: response.message.toString() || 'An error occurred while saving the configs',
-          });
-          setToastMessage(response.message.toString() || 'An error occurred while saving the configs');
-          setToastType('error');
-          setShowToast(true);
-          return;
-        }
-
-        router.invalidate();
-        setToastMessage('Plan updated successfully!');
-        setToastType('success');
-        setShowToast(true);
-        setIsModalOpen(false);
-        setEditingPlan(null);
-        return;
-      }
-
-      const response = await makePlansApi().post(plan);
-
-      if (!response.plan) {
-        setErrors({ general: response.message.toString() || 'An error occurred while saving the plan' });
-        setToastMessage(response.message.toString() || 'An error occurred while saving the plan');
-        setToastType('error');
-        setShowToast(true);
-        return;
-      }
-
-      router.invalidate();
-      setToastMessage('Plan added successfully!');
+      setTableFiles((prev) => prev.filter((f) => f.id !== fileToRemove.id));
       setToastType('success');
+      setToastMessage('File removed successfully');
       setShowToast(true);
-      setIsModalOpen(false);
-      setEditingPlan(null);
     } catch {
-      setErrors({
-        general: 'An error occurred while saving the plan',
-      });
-      setToastMessage('An error occurred while saving the plan');
       setToastType('error');
+      setToastMessage('An error occurred while removing the file');
       setShowToast(true);
     } finally {
-      setLoading(false);
+      setRemoveLoading(false);
+      handleCloseRemoveDialog();
     }
   };
 
-  const handleDeleteClick = (id: string) => {
-    setPlanToDelete(id);
-    setIsDeleteDialogOpen(true);
-  };
+  const handleUploadSubmit = async () => {
+    const nextErrors: { file?: string; general?: string } = {};
+    if (!uploadFile) {
+      nextErrors.file = 'Please choose a file';
+    }
 
-  const handleDeleteConfirm = async () => {
-    if (!planToDelete) {
+    if (nextErrors.file) {
+      setUploadErrors(nextErrors);
       return;
     }
 
-    setDeleteLoading(true);
-
+    setUploadLoading(true);
     try {
-      const response = await makePlansApi().delete(planToDelete);
-      if (!response.success) {
-        setErrors({ general: response.message.toString() || 'An error occurred while saving the configs' });
-        setToastMessage(response.message.toString() || 'An error occurred while saving the configs');
-        setToastType('error');
-        setShowToast(true);
-        return;
-      }
+      const file = uploadFile!;
+      const newRow: KnowledgeBaseFileRow = {
+        id: uuidv4(),
+        name: file.name,
+        sizeBytes: file.size,
+        path: file.name,
+        uploader: 'Admin',
+        createdAt: now(),
+      };
 
-      router.invalidate();
-      setToastMessage('Plan deleted successfully');
+      setTableFiles((prev) => [newRow, ...prev]);
       setToastType('success');
+      setToastMessage('File uploaded successfully');
       setShowToast(true);
-    } catch (error) {
-      setErrors({
-        general: error instanceof Error ? error.message : 'An error occurred while deleting the plan',
-      });
-      setToastMessage(error instanceof Error ? error.message : 'An error occurred while deleting the plan');
+      setIsUploadModalOpen(false);
+      setUploadFile(null);
+      setUploadErrors({});
+    } catch {
+      setUploadErrors({ general: 'An error occurred while uploading the file' });
       setToastType('error');
+      setToastMessage('An error occurred while uploading the file');
       setShowToast(true);
     } finally {
-      setDeleteLoading(false);
-      setIsDeleteDialogOpen(false);
-      setPlanToDelete(null);
+      setUploadLoading(false);
     }
   };
 
-  const handleDeleteCancel = () => {
-    setIsDeleteDialogOpen(false);
-    setPlanToDelete(null);
-  };
-
-  const formatNumber = (num: number): string => {
-    if (num === -1) {
-      return 'Unlimited';
+  const formatBytes = (bytes: number): string => {
+    if (!Number.isFinite(bytes) || bytes < 0) {
+      return '-';
     }
-    return num.toLocaleString();
+    if (bytes === 0) {
+      return '0 B';
+    }
+
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const unitIndex = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    const value = bytes / 1024 ** unitIndex;
+    const decimals = unitIndex === 0 ? 0 : value < 10 ? 2 : 1;
+    return `${value.toFixed(decimals)} ${units[unitIndex]}`;
   };
 
-  const formatPlanPeriod = (period: PlanPeriod): string => {
-    const periodLabels: Record<PlanPeriod, string> = {
-      month: 'Month',
-      year: 'Year',
-      week: 'Week',
-      day: 'Day',
-      lifetime: 'Lifetime',
-    };
-    return periodLabels[period];
+  const truncateMiddle = (value: string, maxLength: number): string => {
+    if (!value) {
+      return '';
+    }
+    if (value.length <= maxLength) {
+      return value;
+    }
+    const keepStart = Math.max(8, Math.floor(maxLength * 0.6));
+    const keepEnd = Math.max(6, maxLength - keepStart - 3);
+    return `${value.slice(0, keepStart)}...${value.slice(-keepEnd)}`;
   };
 
   return (
@@ -217,14 +161,19 @@ export const KnowledgeBase: React.FC<{ plans: Plan[] }> = ({ plans = [] }) => {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Knowledge Base</h1>
-          <p className="mt-1 text-sm text-gray-500">Manage your knowledge base</p>
+          <p className="mt-1 text-sm text-gray-500">Manage your knowledge base files</p>
         </div>
-        <Button onClick={handleOpenModal}>
+        <Button onClick={handleOpenUploadModal}>
           <span className="flex items-center gap-2">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v12m0-12l4 4m-4-4L8 8m-4 8h16"
+              />
             </svg>
-            Add Plan
+            Upload File
           </span>
         </Button>
       </div>
@@ -235,22 +184,16 @@ export const KnowledgeBase: React.FC<{ plans: Plan[] }> = ({ plans = [] }) => {
             <thead>
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Plan Name
+                  File Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Period
+                  File Size
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Chats
+                  File Path
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Questions
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Question Size
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  History Limit
+                  Uploader
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Created
@@ -261,54 +204,36 @@ export const KnowledgeBase: React.FC<{ plans: Plan[] }> = ({ plans = [] }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {plans.map((plan) => (
-                <tr key={plan.id} className="hover:bg-gray-50 transition-colors">
+              {tableFiles.map((file) => (
+                <tr key={file.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm">
-                        {plan.name.charAt(0)}
+                        {file.name?.charAt(0)?.toUpperCase() || 'F'}
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{plan.name}</div>
+                        <div className="text-sm font-medium text-gray-900">{file.name}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{formatPlanPeriod(plan.period)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatNumber(plan.totalChats)}
+                    {formatBytes(file.sizeBytes)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600" title={file.path}>
+                    {truncateMiddle(file.path, 52)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatNumber(plan.totalQuestions)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatNumber(plan.questionSize || -1)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatNumber(plan.historySize)}
+                    {file.uploader}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {humanReadableTime(plan.createdAt)}
+                    {humanReadableTime(file.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        onClick={() => handleEditPlan(plan)}
-                        className="text-blue-600 hover:text-blue-800 transition-colors p-2 hover:bg-blue-50 rounded-lg"
-                        title="Edit plan"
-                      >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(plan.id!)}
+                        onClick={() => handleOpenRemoveDialog(file)}
                         className="text-red-600 hover:text-red-800 transition-colors p-2 hover:bg-red-50 rounded-lg"
-                        title="Delete plan"
+                        title="Remove file"
                       >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path
@@ -326,7 +251,7 @@ export const KnowledgeBase: React.FC<{ plans: Plan[] }> = ({ plans = [] }) => {
             </tbody>
           </table>
 
-          {plans.length === 0 && (
+          {tableFiles.length === 0 && (
             <div className="text-center py-12">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -336,106 +261,55 @@ export const KnowledgeBase: React.FC<{ plans: Plan[] }> = ({ plans = [] }) => {
                   d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                 />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No plans</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by creating a new plan.</p>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No files</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Get started by adding your first knowledge base file.
+              </p>
             </div>
           )}
         </div>
       </Card>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={editingPlan ? 'Edit Plan' : 'Add New Plan'}>
+      <Modal isOpen={isUploadModalOpen} onClose={handleCloseUploadModal} title="Upload File">
         <div className="space-y-4">
-          <Input
-            label="Plan Name"
-            type="text"
-            value={formData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            error={errors.name as string}
-            placeholder="e.g., Basic, Pro, Enterprise"
-            helperText="A descriptive name for the plan"
-          />
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Plan Period</label>
-            <select
-              value={formData.period}
-              onChange={(e) => handleInputChange('period', e.target.value as PlanPeriod)}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-            >
-              <option value="day">Daily</option>
-              <option value="week">Weekly</option>
-              <option value="month">Monthly</option>
-              <option value="year">Yearly</option>
-              <option value="lifetime">Lifetime</option>
-            </select>
-            <p className="mt-1.5 text-sm text-gray-500">Billing period for this plan</p>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Browse File</label>
+            <input
+              type="file"
+              onChange={(e) => handleBrowseFileChange(e.target.files?.[0] ?? null)}
+              className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-200 file:text-gray-800 hover:file:bg-gray-300 focus:outline-none"
+            />
+            {uploadFile && (
+              <p className="mt-1.5 text-sm text-gray-500">
+                Selected: <span className="font-medium text-gray-900">{uploadFile.name}</span>
+              </p>
+            )}
+            {uploadErrors.file && <p className="mt-1.5 text-sm text-red-600">{uploadErrors.file}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Number of Chats"
-              type="number"
-              value={formData.totalChats}
-              onChange={(e) => handleInputChange('totalChats', e.target.value)}
-              error={errors.totalChats}
-              placeholder="100"
-              helperText="Use -1 for unlimited"
-            />
+          {uploadErrors.general && <div className="text-red-500 text-sm">{uploadErrors.general}</div>}
 
-            <Input
-              label="Number of Questions"
-              type="number"
-              value={formData.totalQuestions}
-              onChange={(e) => handleInputChange('totalQuestions', e.target.value)}
-              error={errors.totalQuestions}
-              placeholder="1000"
-              helperText="Use -1 for unlimited"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Question Size (words)"
-              type="number"
-              value={formData.questionSize}
-              onChange={(e) => handleInputChange('questionSize', e.target.value)}
-              error={errors.questionSize}
-              placeholder="50"
-              helperText="Max words per question"
-            />
-
-            <Input
-              label="History Items Limit"
-              type="number"
-              value={formData.historySize}
-              onChange={(e) => handleInputChange('historySize', e.target.value)}
-              error={errors.historySize}
-              placeholder="10"
-              helperText="Chat history items to store"
-            />
-          </div>
-          {errors.general && <div className="text-red-500 text-sm mt-2">{errors.general}</div>}
           <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
-            <Button variant="secondary" onClick={handleCloseModal}>
+            <Button variant="secondary" onClick={handleCloseUploadModal} disabled={uploadLoading}>
               Cancel
             </Button>
-            <Button onClick={handleSavePlan} loading={loading}>
-              {editingPlan ? 'Update Plan' : 'Add Plan'}
+            <Button onClick={handleUploadSubmit} loading={uploadLoading}>
+              Upload
             </Button>
           </div>
         </div>
       </Modal>
 
       <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Plan"
-        message="Are you sure you want to delete this plan? This action cannot be undone."
-        confirmText="Delete"
+        isOpen={isRemoveDialogOpen}
+        onClose={handleCloseRemoveDialog}
+        onConfirm={handleRemoveConfirm}
+        title="Remove file"
+        message="Are you sure you want to remove this file? This action cannot be undone."
+        confirmText="Remove"
         cancelText="Cancel"
         variant="danger"
-        loading={deleteLoading}
+        loading={removeLoading}
       />
 
       <Toast show={showToast} message={toastMessage} type={toastType} onClose={() => setShowToast(false)} />
