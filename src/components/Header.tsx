@@ -13,6 +13,7 @@ export const Header: React.FC<{ className?: string }> = ({ className }) => {
   const menuItems: MenuItem[] = [
     { path: '/dashboard', label: 'Dashboard' },
     { path: '/plans', label: 'Plans' },
+    { path: '/knowledge-base', label: 'Knowledge Base' },
     { path: '/options', label: 'Options' },
     { path: '/analytics', label: 'Analytics' },
     { path: '/system', label: 'System' },
