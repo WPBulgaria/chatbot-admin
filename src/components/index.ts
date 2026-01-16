@@ -6,4 +6,5 @@ export { Sidebar } from './Sidebar';
 export { Header } from './Header';
 export { Modal } from './Modal';
 export { ConfirmDialog } from './ConfirmDialog';
+export { Pagination } from './Pagination';
 

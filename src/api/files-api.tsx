@@ -6,8 +6,8 @@ export class FilesApi extends BaseApi {
     super();
   }
 
-  public async list(): Promise<{ files: KnowledgeBaseFile[], total: number, pages: number}> {
-    const response = await fetch(`${this.apiEndpoint}/files`);
+  public async list(page = 1, limit = 10): Promise<{ files: KnowledgeBaseFile[], total: number, pages: number }> {
+    const response = await fetch(`${this.apiEndpoint}/files?page=${page}&per_page=${limit}`);
     return response.json();
   }
 

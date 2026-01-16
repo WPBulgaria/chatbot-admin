@@ -4,31 +4,45 @@ import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { Toast } from '../components/Toast';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { Pagination } from '../components/Pagination';
 import { humanReadableTime } from '../utils/time';
 import { makeFilesApi } from '../api/files-api';
 import type { KnowledgeBaseFile } from '../types/knowledge-base';
 import { useRouter } from '@tanstack/react-router';
-import {Input} from '@headlessui/react';
+import { Input } from '@headlessui/react';
 
-export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFile[] }> = ({ files = [] }) => {
+interface KnowledgeBaseProps {
+  files: KnowledgeBaseFile[];
+  total: number;
+  pages: number;
+  currentPage: number;
+  limit: number;
+}
+
+export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
+  files = [],
+  total = 0,
+  pages = 1,
+  currentPage = 1,
+  limit = 10,
+}) => {
   const [tableFiles, setTableFiles] = useState<KnowledgeBaseFile[]>(files);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
   const router = useRouter();
+
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadErrors, setUploadErrors] = useState<{ file?: string; general?: string }>({});
   const [uploadLoading, setUploadLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [fileToRemove, setFileToRemove] = useState<KnowledgeBaseFile | null>(null);
   const [removeLoading, setRemoveLoading] = useState(false);
 
   useEffect(() => {
-    if (files.length === 0) {
-      return;
-    }
     setTableFiles(files);
   }, [files]);
 
@@ -103,7 +117,6 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFile[] }> = ({ files 
     try {
       const file = uploadFile!;
 
-
       const response = await makeFilesApi().upload(file);
 
       if (!response.success) {
@@ -114,8 +127,6 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFile[] }> = ({ files 
         return;
       }
 
-
-      setTableFiles((prev) => [response.file!, ...prev]);
       router.invalidate();
 
       setToastType('success');
@@ -135,8 +146,15 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFile[] }> = ({ files 
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (router.navigate as any)({
+      to: '/knowledge-base',
+      search: { page: newPage, limit },
+    });
   };
 
   const formatBytes = (bytes: number): string => {
@@ -165,6 +183,7 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFile[] }> = ({ files 
     const keepEnd = Math.max(6, maxLength - keepStart - 3);
     return `${value.slice(0, keepStart)}...${value.slice(-keepEnd)}`;
   };
+
 
   return (
     <div className="max-w-7xl">
@@ -197,7 +216,13 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFile[] }> = ({ files 
                   File Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  File Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   File Size
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  In use?
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   File Path
@@ -217,24 +242,17 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFile[] }> = ({ files 
               {tableFiles.map((file) => (
                 <tr key={file.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm">
-                        {file.name?.charAt(0)?.toUpperCase() || 'F'}
-                      </div>
-                      <div className="ml-4">
-                        <div className="truncate max-w-[150px] text-sm font-medium text-gray-900" title={file.name}>{file.name}</div>
-                      </div>
+                    <div className="truncate max-w-[150px] text-sm font-medium text-gray-900" title={file.name}>
+                          {file.name}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatBytes(file.size)}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{file.type?.split('/')[1] || 'Unknown'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatBytes(file.size)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{file.inUse ? 'Yes' : 'No'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600" title={file.path}>
                     {truncateMiddle(file.path, 30)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {file.uploader}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{file.uploader}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {humanReadableTime(file.createdAt)}
                   </td>
@@ -272,12 +290,19 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFile[] }> = ({ files 
                 />
               </svg>
               <h3 className="mt-2 text-sm font-medium text-gray-900">No files</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Get started by adding your first knowledge base file.
-              </p>
+              <p className="mt-1 text-sm text-gray-500">Get started by adding your first knowledge base file.</p>
             </div>
           )}
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={pages}
+          totalItems={total}
+          itemsPerPage={limit}
+          onPageChange={handlePageChange}
+          itemLabel="files"
+        />
       </Card>
 
       <Modal isOpen={isUploadModalOpen} onClose={handleCloseUploadModal} title="Upload File">
@@ -323,4 +348,3 @@ export const KnowledgeBase: React.FC<{ files: KnowledgeBaseFile[] }> = ({ files 
     </div>
   );
 };
-
