@@ -3,13 +3,14 @@ import { Card } from '../components/Card';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { Toast } from '../components/Toast';
-import { Switch } from '@headlessui/react';
+import { Switch, Input as HeadlessInput, Field, Label, Description } from '@headlessui/react';
 import type { Plan } from '../types/plan';
 import { now } from '../utils/time';
 import { flattenErrors } from '../utils/errors';
-import { ConfigsSchema, Configs} from '../types/configs';
+import { ConfigsSchema, Configs } from '../types/configs';
 import { makeConfigsApi } from '../api/configs-api';
 import { useRouter } from '@tanstack/react-router';
+import clsx from 'clsx';
 
 
 type Errors = {
@@ -20,17 +21,19 @@ type Errors = {
   publicPlan: string;
   defaultPlan: string;
   apiKey: string;
+  fileSearchStore: string;
 }
 
 export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs, plans = [] }) => {
   const router = useRouter();
   const [formData, setFormData] = useState<Configs>({
     apiKey: "",
-    totalChats: 0,  
+    totalChats: 0,
     totalQuestions: 0,
     adminsOnly: false,
     publicPlan: "",
     defaultPlan: "",
+    fileSearchStore: "",
   });
 
   useEffect(() => {
@@ -168,6 +171,27 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs
                 )}
               </button>
             </div>
+
+            <Field>
+              <Label className="block text-sm font-medium text-gray-700">File Search Store</Label>
+              <HeadlessInput
+                type="text"
+                value={formData.fileSearchStore || ''}
+                onChange={(e) => handleInputChange('fileSearchStore', e.target.value)}
+                placeholder="Enter value"
+                className={clsx(
+                  'mt-2 block w-full px-4 py-2.5 rounded-lg border transition-all duration-200',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                  errors.fileSearchStore ? 'border-red-300' : 'border-gray-300',
+                )}
+              />
+              <Description className="mt-1.5 text-sm text-gray-500">
+                Gemini File Search Store ID for file search
+              </Description>
+              {errors.fileSearchStore && (
+                <p className="mt-1.5 text-sm text-red-600">{errors.fileSearchStore}</p>
+              )}
+            </Field>
           </div>
         </Card>
 
