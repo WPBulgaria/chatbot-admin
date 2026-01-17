@@ -15,6 +15,11 @@ $plugin_url = plugin_dir_url(dirname(__DIR__));
             event.stopPropagation();
         })
 
+        window.appHost = "<?php 
+            $url = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://' . $_SERVER['HTTP_HOST'];
+            echo $url; 
+        ?>";
+
         /**
         let link = document.createElement("link");
         link.setAttribute("rel", "stylesheet");
@@ -24,7 +29,7 @@ $plugin_url = plugin_dir_url(dirname(__DIR__));
 
         let bodyLink = document.createElement("link");
         bodyLink.setAttribute("rel", "stylesheet");
-        bodyLink.setAttribute("href", "/wp-content/plugins/wpb-chatbot/assets/admin__STYLE_LINK__");
+        bodyLink.setAttribute("href", '<?php echo esc_url($plugin_url . "/assets/admin__STYLE_LINK__"); ?>');
         document.body.prepend(bodyLink);
 
         /**

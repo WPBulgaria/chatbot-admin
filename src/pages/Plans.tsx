@@ -10,7 +10,6 @@ import { PlanSchema } from '../types/plan';
 import { useRouter } from '@tanstack/react-router';
 import { makePlansApi } from '../api/plans-api';
 import { flattenErrors } from '../utils/errors';
-import { v4 as uuidv4 } from 'uuid';
 import { humanReadableTime, now } from '../utils/time';
 
 

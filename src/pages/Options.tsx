@@ -113,23 +113,6 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs
     }
   };
 
-  const handleTestConnection = async () => {
-    if (!formData.apiKey.trim()) {
-      setErrors({ apiKey: 'API Key is required to test connection' });
-      return;
-    }
-
-    setLoading(true);
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    setLoading(false);
-    setToastMessage('Connection successful!');
-    setToastType('success');
-    setShowToast(true);
-  };
-
 
   return (
     <div className="max-w-4xl">
