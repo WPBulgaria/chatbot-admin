@@ -55,16 +55,16 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded border border-[#c3c4c7] bg-white p-5 text-left align-middle shadow-lg transition-all">
                 <div className="flex items-start gap-4">
                   <div
-                    className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
-                      variant === 'danger' ? 'bg-red-100' : 'bg-blue-100'
+                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                      variant === 'danger' ? 'bg-[#fcf0f1]' : 'bg-[#f0f6fc]'
                     }`}
                   >
                     {variant === 'danger' ? (
                       <svg
-                        className="w-6 h-6 text-red-600"
+                        className="w-5 h-5 text-[#d63638]"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -78,7 +78,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                       </svg>
                     ) : (
                       <svg
-                        className="w-6 h-6 text-blue-600"
+                        className="w-5 h-5 text-[#2271b1]"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -94,16 +94,16 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                   </div>
 
                   <div className="flex-1">
-                    <Dialog.Title as="h3" className="text-lg font-semibold text-gray-900 mb-2">
+                    <Dialog.Title as="h3" className="text-[14px] font-semibold text-[#1d2327] mb-1">
                       {title}
                     </Dialog.Title>
-                    <Dialog.Description as="p" className="text-sm text-gray-600">
+                    <Dialog.Description as="p" className="text-[13px] text-[#50575e]">
                       {message}
                     </Dialog.Description>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 mt-6">
+                <div className="flex items-center justify-end gap-2 mt-5 pt-4 border-t border-[#c3c4c7]">
                   <Button variant="secondary" onClick={onClose} disabled={loading}>
                     {cancelText}
                   </Button>

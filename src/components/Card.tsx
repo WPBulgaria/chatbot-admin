@@ -14,18 +14,18 @@ export const Card: React.FC<CardProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 ${className}`}>
+    <div className={`bg-white rounded border border-[#c3c4c7] shadow-sm ${className}`}>
       {(title || description) && (
-        <div className="px-6 py-5 border-b border-gray-200">
+        <div className="px-5 py-4 border-b border-[#c3c4c7]">
           {title && (
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <h3 className="text-[14px] font-semibold text-[#1d2327]">{title}</h3>
           )}
           {description && (
-            <p className="mt-1 text-sm text-gray-500">{description}</p>
+            <p className="mt-0.5 text-[13px] text-[#50575e]">{description}</p>
           )}
         </div>
       )}
-      <div className="px-6 py-5">
+      <div className="px-5 py-4">
         {children}
       </div>
     </div>

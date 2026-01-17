@@ -1,2 +1,71 @@
 @import "tailwindcss";
 
+/* WordPress Admin Color Variables */
+:root {
+  /* Primary Colors */
+  --wp-admin-blue: #2271b1;
+  --wp-admin-blue-hover: #135e96;
+  --wp-admin-blue-focus: #043959;
+  
+  /* Dark Colors (Sidebar/Header) */
+  --wp-admin-dark: #1d2327;
+  --wp-admin-dark-gray: #2c3338;
+  --wp-admin-dark-hover: #3c434a;
+  
+  /* Background Colors */
+  --wp-admin-bg: #f0f0f1;
+  --wp-admin-card-bg: #ffffff;
+  
+  /* Text Colors */
+  --wp-admin-text-dark: #1d2327;
+  --wp-admin-text-medium: #50575e;
+  --wp-admin-text-light: #787c82;
+  --wp-admin-text-muted: #a7aaad;
+  --wp-admin-text-nav: #c3c4c7;
+  
+  /* Border Colors */
+  --wp-admin-border: #c3c4c7;
+  --wp-admin-border-dark: #8c8f94;
+  
+  /* Status Colors */
+  --wp-admin-success: #00a32a;
+  --wp-admin-success-hover: #008a20;
+  --wp-admin-warning: #dba617;
+  --wp-admin-error: #d63638;
+  --wp-admin-error-hover: #a41c1e;
+  --wp-admin-info: #72aee6;
+}
+
+/* WordPress Admin Base Styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  line-height: 1.4em;
+  color: var(--wp-admin-text-dark);
+  background-color: var(--wp-admin-bg);
+}
+
+/* WordPress-style focus ring */
+*:focus-visible {
+  outline: 2px solid var(--wp-admin-blue);
+  outline-offset: 1px;
+}
+
+/* WordPress-style scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--wp-admin-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--wp-admin-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--wp-admin-border-dark);
+}
