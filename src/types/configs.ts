@@ -7,7 +7,7 @@ export const ConfigsSchema = z.object({
   adminsOnly: z.boolean().default(true),
   publicPlan: z.optional(z.string()),
   defaultPlan: z.string().min(1, { message: 'Default plan is required' }),
-  fileSearchStore: z.string().min(1, { message: 'File search store is required' }).regex(/^[a-z0-9_]+$/, { message: 'File search store contain only letters and numbers' }),
+  fileSearchStore: z.string().min(1, { message: 'File search store is required' }).regex(/^[-a-z0-9]+$/, { message: 'File search store contain only letters and numbers' }),
 });
 
 export type Configs = z.infer<typeof ConfigsSchema>;

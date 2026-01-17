@@ -31,6 +31,17 @@ export class FilesApi extends BaseApi {
     });
     return response.json();
   }
+
+  public async use(id: string): Promise<{ success: boolean; message?: string }> {
+    const response = await fetch(`${this.apiEndpoint}/files/${id}/use`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.json();
+  }
 }
 
 export const makeFilesApi = () => {

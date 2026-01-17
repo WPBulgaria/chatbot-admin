@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
+import { Button as HeadlessButton } from '@headlessui/react';
 import { Modal } from '../components/Modal';
 import { Toast } from '../components/Toast';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -41,6 +42,7 @@ export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [fileToRemove, setFileToRemove] = useState<KnowledgeBaseFile | null>(null);
   const [removeLoading, setRemoveLoading] = useState(false);
+  const [startUsingLoadingId, setStartUsingLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
     setTableFiles(files);
@@ -99,6 +101,37 @@ export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
     } finally {
       setRemoveLoading(false);
       handleCloseRemoveDialog();
+    }
+  };
+
+  const handleStartUsingFile = async (file: KnowledgeBaseFile) => {
+    if (file.inUse) {
+      return;
+    }
+
+    setStartUsingLoadingId(file.id);
+    try {
+      const response = await makeFilesApi().use(file.id);
+      if (!response.success) {
+        setToastType('error');
+        console.log(response);
+        setToastMessage(response.message?.toString() || 'An error occurred while starting to use the file');
+        setShowToast(true);
+        return;
+      }
+      router.invalidate();
+      setTableFiles((prev) =>
+        prev.map((f) => (f.id === file.id ? { ...f, inUse: true } : f)),
+      );
+      setToastType('success');
+      setToastMessage('File is now in use');
+      setShowToast(true);
+    } catch {
+      setToastType('error');
+      setToastMessage('An error occurred while starting to use the file');
+      setShowToast(true);
+    } finally {
+      setStartUsingLoadingId(null);
     }
   };
 
@@ -225,7 +258,7 @@ export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
                   In use?
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  File Path
+                  File URL
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Uploader
@@ -249,15 +282,78 @@ export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{file.type?.split('/')[1] || 'Unknown'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatBytes(file.size)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{file.inUse ? 'Yes' : 'No'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600" title={file.path}>
-                    {truncateMiddle(file.path, 30)}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600" title={file.url ?? '-'}>
+                    <HeadlessButton
+                      onClick={() => {
+                        if (file.url) {
+                          navigator.clipboard.writeText(file.url);
+                          setToastType('success');
+                          setToastMessage('File URL copied to clipboard');
+                          setShowToast(true);
+                        }
+                      }}
+                      className="rounded-full mr-1 cursor-pointer"
+                      title="Copy file URL to clipboard"
+                      type="button"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+                        <rect x="3" y="3" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+                      </svg>
+                    </HeadlessButton>
+                    {truncateMiddle(file.url ?? '-', 30)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{file.uploader}</td>
+                  <td className="truncate max-w-[200px] px-6 py-4 whitespace-nowrap text-sm text-gray-600" title={file.uploader}>{file.uploader}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {humanReadableTime(file.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
+                      {!file.inUse && (
+                        <button
+                          onClick={() => handleStartUsingFile(file)}
+                          disabled={startUsingLoadingId === file.id}
+                          className="text-green-600 hover:text-green-800 transition-colors p-2 hover:bg-green-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Start using file"
+                        >
+                          {startUsingLoadingId === file.id ? (
+                            <svg
+                              className="w-5 h-5 animate-spin"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              />
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              />
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                          )}
+                        </button>
+                      )}
                       <button
                         onClick={() => handleOpenRemoveDialog(file)}
                         className="text-red-600 hover:text-red-800 transition-colors p-2 hover:bg-red-50 rounded-lg"

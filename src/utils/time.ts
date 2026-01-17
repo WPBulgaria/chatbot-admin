@@ -9,7 +9,7 @@ export function formatDatetimeString(date: string): string {
 export function humanReadableTime(date: string): string {
     return Intl.DateTimeFormat('bg-BG', {
         year: 'numeric',
-        month: 'long',
+        month: 'short',
         day: 'numeric',
     }).format(new Date(date));
 }
