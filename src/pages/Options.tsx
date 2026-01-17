@@ -3,7 +3,7 @@ import { Card } from '../components/Card';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { Toast } from '../components/Toast';
-import { Switch, Input as HeadlessInput, Field, Label, Description } from '@headlessui/react';
+import { Switch, Input as HeadlessInput, Textarea, Field, Label, Description } from '@headlessui/react';
 import type { Plan } from '../types/plan';
 import { now } from '../utils/time';
 import { flattenErrors } from '../utils/errors';
@@ -22,6 +22,7 @@ type Errors = {
   defaultPlan: string;
   apiKey: string;
   fileSearchStore: string;
+  systemInstructions: string;
 }
 
 export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs, plans = [] }) => {
@@ -34,6 +35,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs
     publicPlan: "",
     defaultPlan: "",
     fileSearchStore: "",
+    systemInstructions: "",
   });
 
   useEffect(() => {
@@ -190,6 +192,27 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs
               </Description>
               {errors.fileSearchStore && (
                 <p className="mt-1.5 text-sm text-red-600">{errors.fileSearchStore}</p>
+              )}
+            </Field>
+
+            <Field>
+              <Label className="block text-sm font-medium text-gray-700">System Instructions</Label>
+              <Textarea
+                value={formData.systemInstructions || ''}
+                onChange={(e) => handleInputChange('systemInstructions', e.target.value)}
+                placeholder="Enter system instructions for the AI assistant..."
+                rows={6}
+                className={clsx(
+                  'mt-2 block w-full px-4 py-2.5 rounded-lg border transition-all duration-200 resize-y',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                  errors.systemInstructions ? 'border-red-300' : 'border-gray-300',
+                )}
+              />
+              <Description className="mt-1.5 text-sm text-gray-500">
+                Custom instructions that define the AI assistant's behavior, personality, and context
+              </Description>
+              {errors.systemInstructions && (
+                <p className="mt-1.5 text-sm text-red-600">{errors.systemInstructions}</p>
               )}
             </Field>
           </div>
