@@ -1,7 +1,10 @@
-<?php defined('ABSPATH') || exit; ?>
+<?php
+defined('ABSPATH') || exit;
+$plugin_url = plugin_dir_url(dirname(__DIR__));
+?>
 
 <div id="wp-chatbot-admin-container"></div>
-<script type="module" src="/wp-content/plugins/wpb-chatbot/assets/admin__MAIN_JS__"></script>
+<script type="module" src="<?php echo esc_url($plugin_url . "/assets/admin__MAIN_JS__", ); ?>"></script>
 <script>
     jQuery(document).ready(function($) {
         $("#wp-chatbot-admin-container").on("keyup", function(event) {
