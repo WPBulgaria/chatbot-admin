@@ -6,6 +6,12 @@ $plugin_url = plugin_dir_url(dirname(__DIR__));
 <div id="wp-chatbot-admin-container"></div>
 <script type="module" src="<?php echo esc_url($plugin_url . "/assets/admin__MAIN_JS__", ); ?>"></script>
 <script>
+    
+    window.wpbChatbotConfig = {
+            root: "<?php echo esc_url_raw( rest_url() ); ?>",
+            nonce: "<?php echo wp_create_nonce( 'wp_rest' ); ?>"
+        };
+
     jQuery(document).ready(function($) {
         $("#wp-chatbot-admin-container").on("keyup", function(event) {
             event.stopPropagation();
@@ -15,10 +21,6 @@ $plugin_url = plugin_dir_url(dirname(__DIR__));
             event.stopPropagation();
         })
 
-        window.appHost = "<?php 
-            $url = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://' . $_SERVER['HTTP_HOST'];
-            echo $url; 
-        ?>";
 
         /**
         let link = document.createElement("link");

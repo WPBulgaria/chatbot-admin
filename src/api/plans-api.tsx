@@ -17,7 +17,9 @@ export class PlansApi extends BaseApi {
   }
 
   public async get() {
-    const response = await fetch(`${this.apiEndpoint}/plans`);
+    const response = await fetch(`${this.apiEndpoint}/plans`, {
+      headers: this.getHeaders(),
+    });
     return response.json();
   }
 
@@ -25,9 +27,7 @@ export class PlansApi extends BaseApi {
     const response = await fetch(`${this.apiEndpoint}/plans`, {
       method: 'POST',
       body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getHeaders(),
     });
     return response.json();
   }
@@ -36,25 +36,23 @@ export class PlansApi extends BaseApi {
     const response = await fetch(`${this.apiEndpoint}/plans/${data.id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getHeaders(),
     });
     return response.json();
   }
 
-  public async delete(id: string) {
+  public async delete(id: string) { 
     const response = await fetch(`${this.apiEndpoint}/plans/${id}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getHeaders(),
     });
     return response.json();
   }
 
   public async view(id: string) {
-    const response = await fetch(`${this.apiEndpoint}/plans/${id}`);
+    const response = await fetch(`${this.apiEndpoint}/plans/${id}`, {
+      headers: this.getHeaders(),
+    });
     return response.json() as Promise<Plan>;
   }
 }

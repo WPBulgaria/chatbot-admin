@@ -7,7 +7,9 @@ export class FilesApi extends BaseApi {
   }
 
   public async list(page = 1, limit = 10): Promise<{ files: KnowledgeBaseFile[], total: number, pages: number }> {
-    const response = await fetch(`${this.apiEndpoint}/files?page=${page}&per_page=${limit}`);
+    const response = await fetch(`${this.apiEndpoint}/files?page=${page}&per_page=${limit}`, {
+      headers: this.getHeaders(),
+    });
     return response.json();
   }
 
@@ -18,6 +20,9 @@ export class FilesApi extends BaseApi {
     const response = await fetch(`${this.apiEndpoint}/files`, {
       method: 'POST',
       body: formData,
+      headers: {
+        'X-WP-Nonce': this.nonce,
+      }
     });
     return response.json();
   }
@@ -25,9 +30,7 @@ export class FilesApi extends BaseApi {
   public async remove(id: string): Promise<{ success: boolean; message?: string }> {
     const response = await fetch(`${this.apiEndpoint}/files/${id}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getHeaders(),
     });
     return response.json();
   }
@@ -35,9 +38,7 @@ export class FilesApi extends BaseApi {
   public async use(id: string): Promise<{ success: boolean; message?: string }> {
     const response = await fetch(`${this.apiEndpoint}/files/${id}/use`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getHeaders(),
     });
 
     return response.json();

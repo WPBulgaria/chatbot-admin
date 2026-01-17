@@ -7,7 +7,9 @@ export class ConfigsApi extends BaseApi {
   }
 
   public async get() {
-    const response = await fetch(`${this.apiEndpoint}/configs`);
+    const response = await fetch(`${this.apiEndpoint}/configs`, {
+      headers: this.getHeaders(),
+    });
     return response.json() as Promise<Configs>;
   }
 
@@ -15,9 +17,7 @@ export class ConfigsApi extends BaseApi {
     const response = await fetch(`${this.apiEndpoint}/configs`, {
       method: 'POST',
       body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getHeaders(),
     });
     return response.json();
   }
@@ -25,10 +25,8 @@ export class ConfigsApi extends BaseApi {
   public async testConnection(data: Configs) {
     const response = await fetch(`${this.apiEndpoint}/configs/test-connection`, {
       method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      body: JSON.stringify(data), 
+      headers: this.getHeaders(),
     });
     return response.json();
   }
