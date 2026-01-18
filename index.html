@@ -6,6 +6,12 @@
     <title>WordPress Assistant</title>
   </head>
   <body>
+    <script>
+      window.wpbChatbotConfig = {
+        root: "http://wpstudio.local/wp-json/",
+        nonce: undefined,
+      };
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

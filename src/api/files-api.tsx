@@ -17,12 +17,16 @@ export class FilesApi extends BaseApi {
     const formData = new FormData();
     formData.append('file', file);
 
+    const headers: Record<string, string> = {};
+
+    if (this.nonce) {
+      headers['X-WP-Nonce'] = this.nonce;
+    }
+
     const response = await fetch(`${this.apiEndpoint}/files`, {
       method: 'POST',
       body: formData,
-      headers: {
-        'X-WP-Nonce': this.nonce,
-      }
+      headers: headers,
     });
     return response.json();
   }

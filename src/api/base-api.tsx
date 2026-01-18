@@ -13,9 +13,14 @@ export class BaseApi {
   }
 
   public getHeaders() {
-    return {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'X-WP-Nonce': this.nonce,
     };
+
+    if (this.nonce) {
+      headers['X-WP-Nonce'] = this.nonce;
+    }
+
+    return headers;
   }
 }
