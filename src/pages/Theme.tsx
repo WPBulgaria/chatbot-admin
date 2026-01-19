@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../components/Card';
-import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { Toast } from '../components/Toast';
 import { Switch, Textarea, Field, Label, Description } from '@headlessui/react';
