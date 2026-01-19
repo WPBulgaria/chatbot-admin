@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { ChatTheme } from './chat-theme';
 
 export const ConfigsSchema = z.object({
   apiKey: z.string().min(1, { message: 'API Key is required' }),
@@ -9,6 +10,9 @@ export const ConfigsSchema = z.object({
   defaultPlan: z.string().min(1, { message: 'Default plan is required' }),
   fileSearchStore: z.string().min(1, { message: 'File search store is required' }).regex(/^[-a-z0-9]+$/, { message: 'File search store contain only letters and numbers' }),
   systemInstructions: z.optional(z.string()),
+  chatTheme: z.optional(z.any()), // ChatTheme object - validated separately
 });
 
-export type Configs = z.infer<typeof ConfigsSchema>;
+export type Configs = z.infer<typeof ConfigsSchema> & {
+  chatTheme?: ChatTheme;
+};

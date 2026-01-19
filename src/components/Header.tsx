@@ -15,6 +15,7 @@ export const Header: React.FC<{ className?: string }> = ({ className }) => {
     { path: '/chats', label: 'Chats' },
     { path: '/plans', label: 'Plans' },
     { path: '/knowledge-base', label: 'Knowledge Base' },
+    { path: '/theme', label: 'Theme' },
     { path: '/options', label: 'Options' },
   ];
 
