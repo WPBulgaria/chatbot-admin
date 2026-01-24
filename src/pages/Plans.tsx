@@ -124,9 +124,6 @@ export const Plans: React.FC<{ plans: Plan[] }> = ({ plans = [] }) => {
         // Create new plan
         const response = await makePlansApi().post(plan);
 
-        console.log(response);
-        return;
-
         if (!response.plan) {
           setErrors({ general: response.message.toString() || 'An error occurred while saving the plan' });
           setToastMessage(response.message.toString() || 'An error occurred while saving the plan');

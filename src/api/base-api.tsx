@@ -8,7 +8,8 @@ export class BaseApi {
     if ((window as any)?.wpbChatbotConfig?.root) {
       this.apiEndpoint = (window as any)?.wpbChatbotConfig?.root + 'wpb-chatbot/v1';
     } else {
-      this.apiEndpoint = 'http://wpstudio.local/wp-json/wpb-chatbot/v1';
+      throw new Error('API endpoint not configured');
+      this.apiEndpoint = 'wpb-chatbot/v1';
     }
   }
 
