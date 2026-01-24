@@ -23,6 +23,10 @@ type Errors = {
   apiKey: string;
   fileSearchStore: string;
   systemInstructions: string;
+  temperature: string;
+  topP: string;
+  topK: string;
+  maxOutputTokens: string;
 }
 
 export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs, plans = [] }) => {
@@ -36,6 +40,10 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs
     defaultPlan: "",
     fileSearchStore: "",
     systemInstructions: "",
+    temperature: 0,
+    topP: 0,
+    topK: 0,
+    maxOutputTokens: 0,
   });
 
   useEffect(() => {
@@ -72,6 +80,10 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs
       ...formData,
       totalChats: Number(formData.totalChats),
       totalQuestions: Number(formData.totalQuestions),
+      temperature: formData.temperature !== undefined && formData.temperature.toString() !== '' ? Number(formData.temperature) : undefined,
+      topP: formData.topP !== undefined && formData.topP.toString() !== '' ? Number(formData.topP) : undefined,
+      topK: formData.topK !== undefined && formData.topK.toString() !== '' ? Number(formData.topK) : undefined,
+      maxOutputTokens: formData.maxOutputTokens !== undefined && formData.maxOutputTokens.toString() !== '' ? Number(formData.maxOutputTokens) : undefined,
       modifiedAt: now(),
     }
 
@@ -90,8 +102,12 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs
     try {
       const response = await makeConfigsApi().store(newConfigs);
       if (!response.success) {
-        setErrors({ general: response.message.toString() || 'An error occurred while saving the configs' });
-        setToastMessage(response.message.toString() || 'An error occurred while saving the configs');
+        setErrors(
+          typeof response.message === "string" ? 
+          { general: response.message } :
+          response.message || 'An error occurred while saving the configs'
+          );
+        setToastMessage('An error occurred while saving the configs');
         setToastType('error');
         setShowToast(true);
         return;
@@ -196,6 +212,109 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs
               </Description>
               {errors.systemInstructions && (
                 <p className="mt-1.5 text-sm text-red-600">{errors.systemInstructions}</p>
+              )}
+            </Field>
+          </div>
+        </Card>
+
+        <Card
+          title="LLM Parameters"
+          description="Configure the language model generation parameters"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <Field>
+              <Label className="block text-sm font-medium text-gray-700">Temperature</Label>
+              <HeadlessInput
+                type="number"
+                step="0.1"
+                min="0"
+                max="2"
+                value={formData.temperature ?? ''}
+                onChange={(e) => handleInputChange('temperature', e.target.value)}
+                placeholder="1.0"
+                className={clsx(
+                  'mt-2 block w-full px-4 py-2.5 rounded-lg border transition-all duration-200',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                  errors.temperature ? 'border-red-300' : 'border-gray-300',
+                )}
+              />
+              <Description className="mt-1.5 text-sm text-gray-500">
+                Controls creativity (0-2). Lower = more focused and consistent, Higher = more creative and varied.
+              </Description>
+              {errors.temperature && (
+                <p className="mt-1.5 text-sm text-red-600">{errors.temperature}</p>
+              )}
+            </Field>
+
+            <Field>
+              <Label className="block text-sm font-medium text-gray-700">Top P</Label>
+              <HeadlessInput
+                type="number"
+                step="0.1"
+                min="0"
+                max="1"
+                value={formData.topP ?? ''}
+                onChange={(e) => handleInputChange('topP', e.target.value)}
+                placeholder="0.95"
+                className={clsx(
+                  'mt-2 block w-full px-4 py-2.5 rounded-lg border transition-all duration-200',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                  errors.topP ? 'border-red-300' : 'border-gray-300',
+                )}
+              />
+              <Description className="mt-1.5 text-sm text-gray-500">
+                Controls response diversity (0-1). Lower = more predictable, Higher = more diverse word choices.
+              </Description>
+              {errors.topP && (
+                <p className="mt-1.5 text-sm text-red-600">{errors.topP}</p>
+              )}
+            </Field>
+
+            <Field>
+              <Label className="block text-sm font-medium text-gray-700">Top K</Label>
+              <HeadlessInput
+                type="number"
+                step="1"
+                min="1"
+                max="100"
+                value={formData.topK ?? ''}
+                onChange={(e) => handleInputChange('topK', e.target.value)}
+                placeholder="40"
+                className={clsx(
+                  'mt-2 block w-full px-4 py-2.5 rounded-lg border transition-all duration-200',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                  errors.topK ? 'border-red-300' : 'border-gray-300',
+                )}
+              />
+              <Description className="mt-1.5 text-sm text-gray-500">
+                Limits vocabulary choices (1-100). Lower = more precise and focused, Higher = more vocabulary variety.
+              </Description>
+              {errors.topK && (
+                <p className="mt-1.5 text-sm text-red-600">{errors.topK}</p>
+              )}
+            </Field>
+
+            <Field>
+              <Label className="block text-sm font-medium text-gray-700">Max Output Tokens</Label>
+              <HeadlessInput
+                type="number"
+                step="1"
+                min="1"
+                max="8192"
+                value={formData.maxOutputTokens ?? ''}
+                onChange={(e) => handleInputChange('maxOutputTokens', e.target.value)}
+                placeholder="2048"
+                className={clsx(
+                  'mt-2 block w-full px-4 py-2.5 rounded-lg border transition-all duration-200',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                  errors.maxOutputTokens ? 'border-red-300' : 'border-gray-300',
+                )}
+              />
+              <Description className="mt-1.5 text-sm text-gray-500">
+                Maximum response length in tokens (1-65000). Roughly 1 token = 4 characters.
+              </Description>
+              {errors.maxOutputTokens && (
+                <p className="mt-1.5 text-sm text-red-600">{errors.maxOutputTokens}</p>
               )}
             </Field>
           </div>

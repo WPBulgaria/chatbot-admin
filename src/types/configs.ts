@@ -10,6 +10,10 @@ export const ConfigsSchema = z.object({
   defaultPlan: z.string().min(1, { message: 'Default plan is required' }),
   fileSearchStore: z.string().min(1, { message: 'File search store is required' }).regex(/^[-a-z0-9]+$/, { message: 'File search store contain only letters and numbers' }),
   systemInstructions: z.optional(z.string()),
+  temperature: z.number().min(0).max(2),
+  topP: z.number().min(0).max(1),
+  topK: z.number().min(1).max(100),
+  maxOutputTokens: z.number().min(1).max(65000),
   chatTheme: z.optional(z.any()), // ChatTheme object - validated separately
 });
 
