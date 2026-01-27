@@ -6,24 +6,36 @@ export class ConfigsApi extends BaseApi {
     super();
   }
 
-  public async get() {
-    const response = await fetch(`${this.apiEndpoint}/configs`, {
+  public async get(chatbotId?: number) {
+    const endpoint = chatbotId 
+      ? `${this.apiEndpoint}/chatbots/${chatbotId}/config`
+      : `${this.apiEndpoint}/configs`;
+    
+    const response = await fetch(endpoint, {
       headers: this.getHeaders(),
     });
     return response.json() as Promise<Configs>;
   }
 
-  public async store(data: Configs) {
-    const response = await fetch(`${this.apiEndpoint}/configs`, {
-      method: 'POST',
+  public async store(data: Configs, chatbotId?: number) {
+    const endpoint = chatbotId
+      ? `${this.apiEndpoint}/chatbots/${chatbotId}/config`
+      : `${this.apiEndpoint}/configs`;
+    
+    const response = await fetch(endpoint, {
+      method: chatbotId ? 'PATCH' : 'POST',
       body: JSON.stringify(data),
       headers: this.getHeaders(),
     });
     return response.json();
   }
 
-  public async testConnection(data: Configs) {
-    const response = await fetch(`${this.apiEndpoint}/configs/test-connection`, {
+  public async testConnection(data: Configs, chatbotId?: number) {
+    const endpoint = chatbotId
+      ? `${this.apiEndpoint}/chatbots/${chatbotId}/config/test-connection`
+      : `${this.apiEndpoint}/configs/test-connection`;
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       body: JSON.stringify(data), 
       headers: this.getHeaders(),

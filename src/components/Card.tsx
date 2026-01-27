@@ -5,6 +5,7 @@ interface CardProps {
   title?: string;
   description?: string;
   className?: string;
+  onClick?: () => void;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -12,9 +13,10 @@ export const Card: React.FC<CardProps> = ({
   title,
   description,
   className = '',
+  onClick,
 }) => {
   return (
-    <div className={`bg-white rounded border border-[#c3c4c7] shadow-sm ${className}`}>
+    <div className={`bg-white rounded border border-[#c3c4c7] shadow-sm ${className}`} onClick={onClick}>
       {(title || description) && (
         <div className="px-5 py-4 border-b border-[#c3c4c7]">
           {title && (

@@ -47,6 +47,7 @@ export class ChatsApi extends BaseApi {
   public async list(
     page = 1,
     perPage = 20,
+    chatbotId: number,
     userId?: number,
   ): Promise<ChatListResponse> {
     const params = new URLSearchParams({
@@ -58,14 +59,19 @@ export class ChatsApi extends BaseApi {
       params.append('user_id', userId.toString());
     }
 
-    const response = await fetch(`${this.apiEndpoint}/chats?${params}`, {
+    const endpoint = `${this.apiEndpoint}/chatbots/${chatbotId}/chats?${params}`
+  
+
+    const response = await fetch(endpoint, {
       headers: this.getHeaders(),
     });
     return response.json();
   }
 
-  public async get(id: number): Promise<ChatResponse> {
-    const response = await fetch(`${this.apiEndpoint}/chats/${id}`, {
+  public async get(id: number, chatbotId: number): Promise<ChatResponse> {
+    const endpoint = `${this.apiEndpoint}/chatbots/${chatbotId}/chats/${id}`;
+    
+    const response = await fetch(endpoint, {
       headers: this.getHeaders(),
     });
     return response.json();
@@ -73,13 +79,18 @@ export class ChatsApi extends BaseApi {
 
   public async chat(
     message: string,
+    chatbotId: number,
     chatId?: number,
-  ): Promise<ChatResponse> {
-    const url = chatId
-      ? `${this.apiEndpoint}/chats/${chatId}`
-      : `${this.apiEndpoint}/chats`;
 
-    const response = await fetch(url, {
+  ): Promise<ChatResponse> {
+   
+    
+    const endpoint = chatId
+    ? `${this.apiEndpoint}/chatbots/${chatbotId}/chats/${chatId}`
+    : `${this.apiEndpoint}/chatbots/${chatbotId}/chats`;
+    
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({ message }),
@@ -88,8 +99,10 @@ export class ChatsApi extends BaseApi {
     return response.json();
   }
 
-  public async updateTitle(id: number, title: string): Promise<ChatActionResponse> {
-    const response = await fetch(`${this.apiEndpoint}/chats/${id}`, {
+  public async updateTitle(id: number, title: string, chatbotId: number): Promise<ChatActionResponse> {
+    const endpoint = `${this.apiEndpoint}/chatbots/${chatbotId}/chats/${id}`;
+    
+    const response = await fetch(endpoint, {
       method: 'PUT',
       headers: this.getHeaders(),
       body: JSON.stringify({ title }),
@@ -98,17 +111,10 @@ export class ChatsApi extends BaseApi {
     return response.json();
   }
 
-  public async trash(id: number): Promise<ChatActionResponse> {
-    const response = await fetch(`${this.apiEndpoint}/chats/${id}`, {
-      method: 'DELETE',
-      headers: this.getHeaders(),
-    });
-
-    return response.json();
-  }
-
-  public async remove(id: number): Promise<ChatActionResponse> {
-    const response = await fetch(`${this.apiEndpoint}/chats/${id}`, {
+  public async trash(id: number, chatbotId: number): Promise<ChatActionResponse> {
+    const endpoint = `${this.apiEndpoint}/chatbots/${chatbotId}/chats/${id}`;
+    
+    const response = await fetch(endpoint, {
       method: 'DELETE',
       headers: this.getHeaders(),
     }); 
@@ -116,8 +122,21 @@ export class ChatsApi extends BaseApi {
     return response.json();
   }
 
-  public async restore(id: number): Promise<ChatActionResponse> {
-    const response = await fetch(`${this.apiEndpoint}/chats/${id}/restore`, {
+  public async remove(id: number, chatbotId: number): Promise<ChatActionResponse> {
+    const endpoint = `${this.apiEndpoint}/chatbots/${chatbotId}/chats/${id}`;
+    
+    const response = await fetch(endpoint, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    }); 
+
+    return response.json();
+  }
+
+  public async restore(id: number, chatbotId: number): Promise<ChatActionResponse> {
+    const endpoint = `${this.apiEndpoint}/chatbots/${chatbotId}/chats/${id}/restore`;
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: this.getHeaders(),
     });

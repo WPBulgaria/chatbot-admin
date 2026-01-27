@@ -14,6 +14,7 @@ interface ChatsProps {
   pages: number;
   currentPage: number;
   limit: number;
+  chatbotId?: number;
 }
 
 export const Chats: React.FC<ChatsProps> = ({
@@ -22,6 +23,7 @@ export const Chats: React.FC<ChatsProps> = ({
   pages = 1,
   currentPage = 1,
   limit = 20,
+  chatbotId,
 }) => {
   const [tableChats, setTableChats] = useState<Chat[]>(chats);
   const [showToast, setShowToast] = useState(false);
@@ -60,7 +62,7 @@ export const Chats: React.FC<ChatsProps> = ({
 
     setTrashLoading(true);
     try {
-      const response = await makeChatsApi().trash(chatToTrash.id);
+      const response = await makeChatsApi().trash(chatToTrash.id, chatbotId);
       if (!response.success) {
         setToastType('error');
         setToastMessage(response.message?.toString() || 'An error occurred while trashing the chat');
@@ -101,7 +103,7 @@ export const Chats: React.FC<ChatsProps> = ({
 
     setDeleteLoading(true);
     try {
-      const response = await makeChatsApi().remove(chatToDelete.id);
+      const response = await makeChatsApi().remove(chatToDelete.id, chatbotId);
       if (!response.success) {
         setToastType('error');
         setToastMessage(response.message?.toString() || 'An error occurred while deleting the chat');
@@ -126,7 +128,7 @@ export const Chats: React.FC<ChatsProps> = ({
   const handleRestore = async (chat: Chat) => {
     setRestoreLoadingId(chat.id);
     try {
-      const response = await makeChatsApi().restore(chat.id);
+      const response = await makeChatsApi().restore(chat.id, chatbotId);
       if (!response.success) {
         setToastType('error');
         setToastMessage(response.message?.toString() || 'An error occurred while restoring the chat');

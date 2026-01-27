@@ -30,9 +30,10 @@ const decodeUnicode = (str: string): string => {
 
 interface EditChatProps {
   chat: ChatWithMessages;
+  chatbotId?: number;
 }
 
-export const EditChat: React.FC<EditChatProps> = ({ chat }) => {
+export const EditChat: React.FC<EditChatProps> = ({ chat, chatbotId }) => {
   const [title, setTitle] = useState(chat.title || '');
   const [titleLoading, setTitleLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -50,7 +51,7 @@ export const EditChat: React.FC<EditChatProps> = ({ chat }) => {
 
     setTitleLoading(true);
     try {
-      const response = await makeChatsApi().updateTitle(chat.id, title);
+      const response = await makeChatsApi().updateTitle(chat.id, title, chatbotId);
       if (!response.success) {
         setToastType('error');
         setToastMessage(response.message?.toString() || 'An error occurred while updating the title');

@@ -29,7 +29,7 @@ type Errors = {
   maxOutputTokens: string;
 }
 
-export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs, plans = [] }) => {
+export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId?: number }> = ({ configs, plans = [], chatbotId }) => {
   const router = useRouter();
   const [formData, setFormData] = useState<Configs>({
     apiKey: "",
@@ -100,7 +100,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[] }> = ({ configs
     setLoading(true);
 
     try {
-      const response = await makeConfigsApi().store(newConfigs);
+      const response = await makeConfigsApi().store(newConfigs, chatbotId);
       if (!response.success) {
         setErrors(
           typeof response.message === "string" ? 

@@ -18,6 +18,7 @@ interface KnowledgeBaseProps {
   pages: number;
   currentPage: number;
   limit: number;
+  chatbotId?: number;
 }
 
 export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
@@ -26,6 +27,7 @@ export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
   pages = 1,
   currentPage = 1,
   limit = 10,
+  chatbotId,
 }) => {
   const [tableFiles, setTableFiles] = useState<KnowledgeBaseFile[]>(files);
   const [showToast, setShowToast] = useState(false);
@@ -82,7 +84,7 @@ export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
 
     setRemoveLoading(true);
     try {
-      const response = await makeFilesApi().remove(fileToRemove.id);
+      const response = await makeFilesApi().remove(fileToRemove.id, chatbotId);
       if (!response.success) {
         setToastType('error');
         setToastMessage(response.message?.toString() || 'An error occurred while removing the file');
@@ -111,7 +113,7 @@ export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
 
     setStartUsingLoadingId(file.id);
     try {
-      const response = await makeFilesApi().use(file.id);
+      const response = await makeFilesApi().use(file.id, chatbotId);
       if (!response.success) {
         setToastType('error');
         console.log(response);
@@ -150,7 +152,7 @@ export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
     try {
       const file = uploadFile!;
 
-      const response = await makeFilesApi().upload(file);
+      const response = await makeFilesApi().upload(file, chatbotId);
 
       if (!response.success) {
         setUploadErrors({ general: response.message?.toString() || 'An error occurred while uploading the file' });

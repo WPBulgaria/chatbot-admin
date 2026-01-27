@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Chats } from '../pages/Chats';
-import { makeChatsApi, type Chat } from '../api/chats-api';
+import { Chats } from '../../pages/Chats';
+import { makeChatsApi, type Chat } from '../../api/chats-api';
 
 type ChatsSearch = {
   page?: number;
@@ -13,10 +13,11 @@ type LoaderData = {
   pages: number;
   currentPage: number;
   limit: number;
+  chatbotId: number;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const Route = createFileRoute('/chats' as any)({
+export const Route = createFileRoute('/$chatbotId/chats' as any)({
   validateSearch: (search: Record<string, unknown>): ChatsSearch => {
     return {
       page: Number(search.page) || 1,
@@ -24,15 +25,17 @@ export const Route = createFileRoute('/chats' as any)({
     };
   },
   loaderDeps: ({ search: { page, limit } }) => ({ page, limit }),
-  loader: async ({ deps: { page, limit } }): Promise<LoaderData> => {
+  loader: async ({ deps: { page, limit }, params }): Promise<LoaderData> => {
+    const chatbotId = Number(params.chatbotId);
     const chatsApi = makeChatsApi();
-    const data = await chatsApi.list(page, limit);
+    const data = await chatsApi.list(page, limit, chatbotId);
     return {
       chats: data.chats,
       total: data.total,
       pages: data.pages,
       currentPage: page ?? 1,
       limit: limit ?? 20,
+      chatbotId: chatbotId,
     };
   },
   component: () => {
@@ -44,6 +47,7 @@ export const Route = createFileRoute('/chats' as any)({
         pages={data.pages}
         currentPage={data.currentPage}
         limit={data.limit}
+        chatbotId={data.chatbotId}
       />
     );
   },

@@ -12,6 +12,7 @@ import type { Configs } from '../types/configs';
 
 interface ThemeProps {
   configs: Configs;
+  chatbotId?: number;
 }
 
 // Color input component
@@ -79,7 +80,7 @@ const ThemeInput: React.FC<{
   </Field>
 );
 
-export const Theme: React.FC<ThemeProps> = ({ configs }) => {
+export const Theme: React.FC<ThemeProps> = ({ configs, chatbotId }) => {
   const router = useRouter();
   const [theme, setTheme] = useState<ChatTheme>(configs.chatTheme || defaultTheme);
   const [loading, setLoading] = useState(false);
@@ -115,7 +116,7 @@ export const Theme: React.FC<ThemeProps> = ({ configs }) => {
         ...configs,
         chatTheme: theme,
       };
-      const response = await makeConfigsApi().store(updatedConfigs);
+      const response = await makeConfigsApi().store(updatedConfigs, chatbotId);
       if (!response.success) {
         setToastType('error');
         setToastMessage(response.message?.toString() || 'An error occurred while saving the theme');

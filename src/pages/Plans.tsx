@@ -13,7 +13,7 @@ import { flattenErrors } from '../utils/errors';
 import { humanReadableTime, now } from '../utils/time';
 
 
-export const Plans: React.FC<{ plans: Plan[] }> = ({ plans = [] }) => {
+export const Plans: React.FC<{ plans: Plan[]; chatbotId?: number }> = ({ plans = [], chatbotId }) => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
@@ -104,7 +104,7 @@ export const Plans: React.FC<{ plans: Plan[] }> = ({ plans = [] }) => {
     try {
       if (editingPlan) {
         // Update existing plan
-        const response = await makePlansApi().update(plan);
+        const response = await makePlansApi().update(plan, chatbotId);
         
         if (!response.plan) {
           console.log("error");
@@ -122,7 +122,7 @@ export const Plans: React.FC<{ plans: Plan[] }> = ({ plans = [] }) => {
         setEditingPlan(null);
       } else {
         // Create new plan
-        const response = await makePlansApi().post(plan);
+        const response = await makePlansApi().post(plan, chatbotId);
 
         if (!response.plan) {
           setErrors({ general: response.message.toString() || 'An error occurred while saving the plan' });
@@ -165,7 +165,7 @@ export const Plans: React.FC<{ plans: Plan[] }> = ({ plans = [] }) => {
     setDeleteLoading(true);
 
     try {
-      const response = await makePlansApi().delete(planToDelete);
+      const response = await makePlansApi().delete(planToDelete, chatbotId);
       if (!response.success) {
         setErrors({ general: response.message.toString() || 'An error occurred while saving the configs' });
         setToastMessage(response.message.toString() || 'An error occurred while saving the configs');
