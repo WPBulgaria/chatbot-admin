@@ -7,8 +7,8 @@ export const Route = createFileRoute('/$chatbotId/plans')({
   loader: async ({ params }) => {
     const PlansApi = makePlansApi();
     const chatbotId = Number(params.chatbotId);
-    const plans = await PlansApi.get(chatbotId);
-    return { plans: plans as Plan[], chatbotId: chatbotId };
+    const data = await PlansApi.get(chatbotId);
+    return { plans: data.plans as Plan[], chatbotId: chatbotId };
   },
   component: () => {
     const { plans, chatbotId } = Route.useLoaderData();

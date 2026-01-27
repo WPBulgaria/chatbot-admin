@@ -12,7 +12,7 @@ import type { Configs } from '../types/configs';
 
 interface ThemeProps {
   configs: Configs;
-  chatbotId?: number;
+  chatbotId: number;
 }
 
 // Color input component

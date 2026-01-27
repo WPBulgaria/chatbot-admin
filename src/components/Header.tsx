@@ -24,7 +24,7 @@ export const Header: React.FC<{ className?: string, chatbot?: Chatbot }> = ({ cl
     { path: '/$chatbotId/plans', label: 'Plans' },
     { path: '/$chatbotId/knowledge-base', label: 'Knowledge Base' },
     { path: '/$chatbotId/theme', label: 'Theme' },
-    { path: '/$chatbotId/options', label: 'Options' },
+    { path: '/$chatbotId/configuration', label: 'Configuration' },
   ];
 
 

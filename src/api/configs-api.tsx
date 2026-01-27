@@ -6,34 +6,28 @@ export class ConfigsApi extends BaseApi {
     super();
   }
 
-  public async get(chatbotId?: number) {
-    const endpoint = chatbotId 
-      ? `${this.apiEndpoint}/chatbots/${chatbotId}/config`
-      : `${this.apiEndpoint}/configs`;
+  public async get(chatbotId: number): Promise<{ configs: Configs, success: boolean, message?: string }> {
+    const endpoint = `${this.apiEndpoint}/chatbots/${chatbotId}/config`
     
     const response = await fetch(endpoint, {
       headers: this.getHeaders(),
     });
-    return response.json() as Promise<Configs>;
+    return response.json();
   }
 
-  public async store(data: Configs, chatbotId?: number) {
-    const endpoint = chatbotId
-      ? `${this.apiEndpoint}/chatbots/${chatbotId}/config`
-      : `${this.apiEndpoint}/configs`;
+  public async store(data: Configs, chatbotId: number) {
+    const endpoint = `${this.apiEndpoint}/chatbots/${chatbotId}/config`
     
     const response = await fetch(endpoint, {
-      method: chatbotId ? 'PATCH' : 'POST',
+      method: 'POST',
       body: JSON.stringify(data),
       headers: this.getHeaders(),
     });
     return response.json();
   }
 
-  public async testConnection(data: Configs, chatbotId?: number) {
-    const endpoint = chatbotId
-      ? `${this.apiEndpoint}/chatbots/${chatbotId}/config/test-connection`
-      : `${this.apiEndpoint}/configs/test-connection`;
+  public async testConnection(data: Configs, chatbotId: number) {
+    const endpoint = `${this.apiEndpoint}/chatbots/${chatbotId}/config/test-connection`
     
     const response = await fetch(endpoint, {
       method: 'POST',

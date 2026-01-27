@@ -13,7 +13,7 @@ export const Route = createFileRoute('/$chatbotId/theme')({
     const chatbotId = Number(params.chatbotId);
     const configsApi = makeConfigsApi();
     const configs = await configsApi.get(chatbotId);
-    return { configs, chatbotId: chatbotId };
+    return { configs: configs.configs as Configs, chatbotId: chatbotId };
   },
   component: () => {
     const { configs, chatbotId } = Route.useLoaderData() as LoaderData;

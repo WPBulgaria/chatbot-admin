@@ -13,7 +13,7 @@ import { flattenErrors } from '../utils/errors';
 import { humanReadableTime, now } from '../utils/time';
 
 
-export const Plans: React.FC<{ plans: Plan[]; chatbotId?: number }> = ({ plans = [], chatbotId }) => {
+export const Plans: React.FC<{ plans: Plan[]; chatbotId: number }> = ({ plans = [], chatbotId }) => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);

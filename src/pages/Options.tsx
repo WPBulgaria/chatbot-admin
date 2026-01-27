@@ -29,7 +29,7 @@ type Errors = {
   maxOutputTokens: string;
 }
 
-export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId?: number }> = ({ configs, plans = [], chatbotId }) => {
+export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: number }> = ({ configs, plans = [], chatbotId }) => {
   const router = useRouter();
   const [formData, setFormData] = useState<Configs>({
     apiKey: "",

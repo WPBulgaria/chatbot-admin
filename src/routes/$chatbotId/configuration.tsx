@@ -13,14 +13,14 @@ export const Route = createFileRoute('/$chatbotId/configuration')({
 
     const result = await Promise.all([
       configsApi.get(chatbotId),
-      PlansApi.get(),
+      PlansApi.get(chatbotId),
     ]);
-
-    return { configs: result[0] as Configs, plans: result[1] as Plan[] };
+    
+    return { configs: result[0].configs as Configs, plans: result[1].plans, chatbotId: chatbotId };
   },
   component: () => {
-    const {configs, plans} = Route.useLoaderData();
-    return <Options configs={configs} plans={plans} /> 
+    const {configs, plans, chatbotId} = Route.useLoaderData();
+    return <Options configs={configs} plans={plans} chatbotId={chatbotId} /> 
   }
 });
 
