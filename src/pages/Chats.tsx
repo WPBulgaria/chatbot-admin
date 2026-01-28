@@ -14,7 +14,7 @@ interface ChatsProps {
   pages: number;
   currentPage: number;
   limit: number;
-  chatbotId?: number;
+  chatbotId: number;
 }
 
 export const Chats: React.FC<ChatsProps> = ({

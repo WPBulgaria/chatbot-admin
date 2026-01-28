@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { chatbotsApi } from '../api/chatbots-api';
 import type { Chatbot, ChatbotPayload } from '../types/chatbot';
-import { Button, Card, Modal, Input, Toast } from '../components';
+import { Button, Card, Modal, Input, Toast, ConfirmDialog } from '../components';
 
 export const Chatbots = ({ chatbots, total, pages, currentPage, limit }: { chatbots: Chatbot[], total: number, pages: number, currentPage: number, limit: number }) => {
   const navigate = useNavigate();
@@ -14,6 +14,9 @@ export const Chatbots = ({ chatbots, total, pages, currentPage, limit }: { chatb
     status: 'publish',
   });
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [chatbotToDelete, setChatbotToDelete] = useState<Chatbot | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const router = useRouter();
   const handleCreateChatbot = async () => {
     if (!chatbot.title.trim()) {
@@ -37,20 +40,33 @@ export const Chatbots = ({ chatbots, total, pages, currentPage, limit }: { chatb
     navigate({ to: `/$chatbotId/dashboard`, params: { chatbotId: chatbot.id.toString() } });
   };
 
-  const handleDeleteChatbot = async (id: number, event: React.MouseEvent) => {
+  const handleOpenDeleteDialog = (chatbot: Chatbot, event: React.MouseEvent) => {
     event.stopPropagation();
-    
-    if (!confirm('Are you sure you want to delete this chatbot?')) {
+    setChatbotToDelete(chatbot);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
+    setChatbotToDelete(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!chatbotToDelete) {
       return;
     }
 
+    setDeleteLoading(true);
     try {
-      await chatbotsApi.trash(id);
-      setChatbotsList(chatbotsList.filter(bot => bot.id !== id));
+      await chatbotsApi.trash(chatbotToDelete.id);
+      setChatbotsList(chatbotsList.filter(bot => bot.id !== chatbotToDelete.id));
       setToast({ message: 'Chatbot deleted successfully', type: 'success' });
       router.invalidate();
     } catch (error) {
       setToast({ message: 'Failed to delete chatbot', type: 'error' });
+    } finally {
+      setDeleteLoading(false);
+      handleCloseDeleteDialog();
     }
   };
 
@@ -116,7 +132,7 @@ export const Chatbots = ({ chatbots, total, pages, currentPage, limit }: { chatb
                     ID: {chatbot.id}
                   </div>
                   <button
-                    onClick={(e) => handleDeleteChatbot(chatbot.id, e)}
+                    onClick={(e) => handleOpenDeleteDialog(chatbot, e)}
                     className="text-red-600 hover:text-red-700 text-sm font-medium"
                   >
                     Delete
@@ -179,6 +195,17 @@ export const Chatbots = ({ chatbots, total, pages, currentPage, limit }: { chatb
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Chatbot"
+        message={`Are you sure you want to delete "${chatbotToDelete?.title}"?`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        loading={deleteLoading}
+      />
 
       {toast && (
         <Toast

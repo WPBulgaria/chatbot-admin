@@ -18,7 +18,7 @@ interface KnowledgeBaseProps {
   pages: number;
   currentPage: number;
   limit: number;
-  chatbotId?: number;
+  chatbotId: number;
 }
 
 export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
@@ -45,10 +45,6 @@ export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
   const [fileToRemove, setFileToRemove] = useState<KnowledgeBaseFile | null>(null);
   const [removeLoading, setRemoveLoading] = useState(false);
   const [startUsingLoadingId, setStartUsingLoadingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setTableFiles(files);
-  }, [files]);
 
   const handleOpenUploadModal = () => {
     setUploadErrors({});
@@ -162,7 +158,7 @@ export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
         return;
       }
 
-      router.invalidate();
+
 
       setToastType('success');
       setToastMessage('File uploaded successfully');
@@ -170,6 +166,7 @@ export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({
       setIsUploadModalOpen(false);
       setUploadErrors({});
       setUploadFile(null);
+      router.invalidate();
     } catch {
       setUploadErrors({ general: 'An error occurred while uploading the file' });
       setToastType('error');

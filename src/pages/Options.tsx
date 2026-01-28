@@ -148,17 +148,18 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
             <div className="relative">
               <Input
                 label="API Key"
-                type={showApiKey ? 'text' : 'password'}
+                type={showApiKey || formData.apiKey === "🔒" ? 'text' : 'password'}
                 value={formData.apiKey}
                 onChange={(e) => handleInputChange('apiKey', e.target.value)}
                 error={errors.apiKey}
                 placeholder="sk-..."
                 helperText="Your secret API key for authentication"
               />
-              <button
+              <Button
                 onClick={() => setShowApiKey(!showApiKey)}
-                className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
-                type="button"
+                className="absolute right-1 bg-transparent top-7 text-gray-400 hover:text-gray-600 !border-none !outline-none !ring-0 cursor-pointer"
+                variant="secondary"
+                size="sm"
               >
                 {showApiKey ? (
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -170,18 +171,18 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 )}
-              </button>
+              </Button>
             </div>
 
             <Field>
               <Label className="block text-sm font-medium text-gray-700">File Search Store</Label>
-              <HeadlessInput
+              <Input
                 type="text"
                 value={formData.fileSearchStore || ''}
                 onChange={(e) => handleInputChange('fileSearchStore', e.target.value)}
                 placeholder="Enter value"
                 className={clsx(
-                  'mt-2 block w-full px-4 py-2.5 rounded-lg border transition-all duration-200',
+                  'mt-2',
                   'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
                   errors.fileSearchStore ? 'border-red-300' : 'border-gray-300',
                 )}
@@ -224,7 +225,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
           <div className="grid grid-cols-2 gap-4">
             <Field>
               <Label className="block text-sm font-medium text-gray-700">Temperature</Label>
-              <HeadlessInput
+              <Input
                 type="number"
                 step="0.1"
                 min="0"
@@ -233,7 +234,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
                 onChange={(e) => handleInputChange('temperature', e.target.value)}
                 placeholder="1.0"
                 className={clsx(
-                  'mt-2 block w-full px-4 py-2.5 rounded-lg border transition-all duration-200',
+                  'mt-2',
                   'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
                   errors.temperature ? 'border-red-300' : 'border-gray-300',
                 )}
@@ -248,7 +249,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
 
             <Field>
               <Label className="block text-sm font-medium text-gray-700">Top P</Label>
-              <HeadlessInput
+              <Input
                 type="number"
                 step="0.1"
                 min="0"
@@ -257,7 +258,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
                 onChange={(e) => handleInputChange('topP', e.target.value)}
                 placeholder="0.95"
                 className={clsx(
-                  'mt-2 block w-full px-4 py-2.5 rounded-lg border transition-all duration-200',
+                  'mt-2',
                   'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
                   errors.topP ? 'border-red-300' : 'border-gray-300',
                 )}
@@ -272,7 +273,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
 
             <Field>
               <Label className="block text-sm font-medium text-gray-700">Top K</Label>
-              <HeadlessInput
+              <Input
                 type="number"
                 step="1"
                 min="1"
@@ -281,7 +282,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
                 onChange={(e) => handleInputChange('topK', e.target.value)}
                 placeholder="40"
                 className={clsx(
-                  'mt-2 block w-full px-4 py-2.5 rounded-lg border transition-all duration-200',
+                  'mt-2',
                   'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
                   errors.topK ? 'border-red-300' : 'border-gray-300',
                 )}
@@ -296,7 +297,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
 
             <Field>
               <Label className="block text-sm font-medium text-gray-700">Max Output Tokens</Label>
-              <HeadlessInput
+              <Input
                 type="number"
                 step="1"
                 min="1"
@@ -305,7 +306,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
                 onChange={(e) => handleInputChange('maxOutputTokens', e.target.value)}
                 placeholder="2048"
                 className={clsx(
-                  'mt-2 block w-full px-4 py-2.5 rounded-lg border transition-all duration-200',
+                  'mt-2',
                   'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
                   errors.maxOutputTokens ? 'border-red-300' : 'border-gray-300',
                 )}
@@ -383,7 +384,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
               <select
                 value={formData.publicPlan}
                 onChange={(e) => handleInputChange('publicPlan', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-1.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               >
                 <option value="">Select a plan</option>
                 {plans.map((plan) => (
@@ -407,7 +408,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
               <select
                 value={formData.defaultPlan}
                 onChange={(e) => handleInputChange('defaultPlan', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-1.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               >
                 <option value="">Select a plan</option>
                 {plans.map((plan) => (
