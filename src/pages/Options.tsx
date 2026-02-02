@@ -3,7 +3,7 @@ import { Card } from '../components/Card';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { Toast } from '../components/Toast';
-import { Switch, Input as HeadlessInput, Textarea, Field, Label, Description } from '@headlessui/react';
+import { Switch, Textarea, Field, Label, Description } from '@headlessui/react';
 import type { Plan } from '../types/plan';
 import { now } from '../utils/time';
 import { flattenErrors } from '../utils/errors';
@@ -21,6 +21,7 @@ type Errors = {
   publicPlan: string;
   defaultPlan: string;
   apiKey: string;
+  model: string;
   fileSearchStore: string;
   systemInstructions: string;
   temperature: string;
@@ -29,7 +30,7 @@ type Errors = {
   maxOutputTokens: string;
 }
 
-export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: number }> = ({ configs, plans = [], chatbotId }) => {
+export const Options: React.FC<{ models: {name:string, displayName:string}[], configs: Configs, plans: Plan[], chatbotId: number }> = ({ models, configs, plans = [], chatbotId }) => {
   const router = useRouter();
   const [formData, setFormData] = useState<Configs>({
     apiKey: "",
@@ -44,6 +45,7 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
     topP: 0,
     topK: 0,
     maxOutputTokens: 0,
+    model: "",
   });
 
   useEffect(() => {
@@ -173,6 +175,32 @@ export const Options: React.FC<{ configs: Configs, plans: Plan[], chatbotId: num
                 )}
               </Button>
             </div>
+
+            <Field>
+              <Label className="block text-sm font-medium text-gray-700">Model</Label>
+              <select
+                value={formData.model || ''}
+                onChange={(e) => handleInputChange('model', e.target.value)}
+                className={clsx(
+                  'mt-2 block w-full px-4 py-1.5 rounded-lg border transition-all duration-200',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                  errors.model ? 'border-red-300' : 'border-gray-300',
+                )}
+              >
+                <option value="">Select a model</option>
+                {models.map((model) => (
+                  <option key={model.name} value={model.name}>
+                    {model.displayName}
+                  </option>
+                ))}
+              </select>
+              <Description className="mt-1.5 text-sm text-gray-500">
+                Select the AI model to use for generating responses
+              </Description>
+              {errors.model && (
+                <p className="mt-1.5 text-sm text-red-600">{errors.model}</p>
+              )}
+            </Field>
 
             <Field>
               <Label className="block text-sm font-medium text-gray-700">File Search Store</Label>

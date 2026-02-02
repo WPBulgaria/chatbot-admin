@@ -8,6 +8,7 @@ export interface Chatbot {
   createdAt: string;
   modifiedAt: string;
   config?: Configs;
+  models?: {name:string, displayName:string}[];
 }
 
 export interface ChatbotPayload {

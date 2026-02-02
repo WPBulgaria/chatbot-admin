@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { chatbotsApi } from '../api/chatbots-api';
 import type { Chatbot, ChatbotPayload } from '../types/chatbot';
 import { Button, Card, Modal, Input, Toast, ConfirmDialog } from '../components';
 
-export const Chatbots = ({ chatbots, total, pages, currentPage, limit }: { chatbots: Chatbot[], total: number, pages: number, currentPage: number, limit: number }) => {
+export const Chatbots = ({ chatbots }: { chatbots: Chatbot[], total: number, pages: number, currentPage: number, limit: number }) => {
   const navigate = useNavigate();
   const [chatbotsList, setChatbotsList] = useState<Chatbot[]>(chatbots);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

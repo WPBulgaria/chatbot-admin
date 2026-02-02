@@ -15,6 +15,7 @@ export const ConfigsSchema = z.object({
   topK: z.number().min(1).max(100),
   maxOutputTokens: z.number().min(1).max(65000),
   chatTheme: z.optional(z.any()), // ChatTheme object - validated separately
+  model: z.string().min(1, { message: 'Model is required' }).regex(/^[a-z0-9\/\._-]+$/, { message: 'Model contain only letters, numbers, and hyphens' }),
 });
 
 export type Configs = z.infer<typeof ConfigsSchema> & {

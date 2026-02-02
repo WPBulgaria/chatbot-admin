@@ -24,7 +24,7 @@ export const Route = createFileRoute('/_general/chatbots')({
     };
   },
   loaderDeps: ({ search: { page, limit } }) => ({ page, limit }),
-  loader: async ({ deps: { page, limit }, params }): Promise<LoaderData> => {
+  loader: async ({ deps: { page, limit } }): Promise<LoaderData> => {
     const data = await chatbotsApi.list(page, limit);
     return { chatbots: data.chatbots as Chatbot[], total: data.total, pages: data.pages, currentPage: page ?? 1, limit: limit ?? 20 };
   },

@@ -85,9 +85,7 @@ export class ChatsApi extends BaseApi {
   ): Promise<ChatResponse> {
    
     
-    const endpoint = chatId
-    ? `${this.apiEndpoint}/chatbots/${chatbotId}/chats/${chatId}`
-    : `${this.apiEndpoint}/chatbots/${chatbotId}/chats`;
+    const endpoint = `${this.apiEndpoint}/chatbots/${chatbotId}/chats/${chatId}`
     
 
     const response = await fetch(endpoint, {

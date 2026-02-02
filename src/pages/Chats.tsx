@@ -152,7 +152,7 @@ export const Chats: React.FC<ChatsProps> = ({
   const handlePageChange = (newPage: number) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (router.navigate as any)({
-      to: '/chats',
+      to: `/${chatbotId.toString()}/chats`,
       search: { page: newPage, limit },
     });
   };
@@ -239,8 +239,8 @@ export const Chats: React.FC<ChatsProps> = ({
                     <div className="flex items-center justify-end gap-2">
                       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       <Link
-                        to={'/chats/$chatId' as any}
-                        params={{ chatId: String(chat.id) } as any}
+                        to={`/$chatbotId/chats/$chatId` as any}
+                        params={{ chatId: String(chat.id), chatbotId: chatbotId.toString() } as any}
                         className="text-blue-600 hover:text-blue-800 transition-colors p-2 hover:bg-blue-50 rounded-lg"
                         title="View chat"
                       >

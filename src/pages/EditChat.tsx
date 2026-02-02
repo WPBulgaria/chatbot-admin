@@ -30,7 +30,7 @@ const decodeUnicode = (str: string): string => {
 
 interface EditChatProps {
   chat: ChatWithMessages;
-  chatbotId?: number;
+  chatbotId: number;
 }
 
 export const EditChat: React.FC<EditChatProps> = ({ chat, chatbotId }) => {
@@ -76,7 +76,8 @@ export const EditChat: React.FC<EditChatProps> = ({ chat, chatbotId }) => {
       <div className="mb-6">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <Link
-          to={'/chats' as any}
+          to={`/$chatbotId/chats` as any}
+          params={{ chatbotId: chatbotId.toString() } as any}
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1,4 +1,4 @@
-import { Link, useRouterState, useNavigate, useLoaderData } from '@tanstack/react-router';
+import { Link, useRouterState, useNavigate } from '@tanstack/react-router';
 import clsx from 'clsx';
 import { Chatbot } from '../types/chatbot';
 import { useCallback } from 'react';
