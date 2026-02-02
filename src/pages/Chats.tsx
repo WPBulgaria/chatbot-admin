@@ -209,8 +209,8 @@ export const Chats: React.FC<ChatsProps> = ({
                   <td className="px-6 py-4 whitespace-nowrap">
                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     <Link
-                      to={'/chats/$chatId' as any}
-                      params={{ chatId: String(chat.id) } as any}
+                      to={`/$chatbotId/chats/$chatId` as any}
+                      params={{ chatId: String(chat.id), chatbotId: chatbotId.toString() } as any}
                       className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
                       title={chat.title}
                     >
