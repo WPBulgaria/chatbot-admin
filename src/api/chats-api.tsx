@@ -53,6 +53,7 @@ export class ChatsApi extends BaseApi {
     const params = new URLSearchParams({
       page: page.toString(),
       per_page: perPage.toString(),
+      list_all: '1',
     });
 
     if (userId) {

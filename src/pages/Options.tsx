@@ -28,6 +28,14 @@ type Errors = {
   topP: string;
   topK: string;
   maxOutputTokens: string;
+  'consultant.enabled': string;
+  'consultant.model': string;
+  'consultant.systemInstructions': string;
+  'consultant.temperature': string;
+  'consultant.topP': string;
+  'consultant.topK': string;
+  'consultant.maxOutputTokens': string;
+  'consultant.description': string;
 }
 
 export const Options: React.FC<{ models: {name:string, displayName:string}[], configs: Configs, plans: Plan[], chatbotId: number }> = ({ models, configs, plans = [], chatbotId }) => {
@@ -46,12 +54,34 @@ export const Options: React.FC<{ models: {name:string, displayName:string}[], co
     topK: 0,
     maxOutputTokens: 0,
     model: "",
+    consultant: {
+      enabled: false,
+      model: "",
+      systemInstructions: "",
+      temperature: 0,
+      topP: 0,
+      topK: 0,
+      maxOutputTokens: 0,
+      description: "",
+    },
   });
 
   useEffect(() => {
 
     if (configs) {
-      setFormData({...configs});
+      setFormData({
+        ...configs,
+        consultant: configs.consultant || {
+          enabled: false,
+          model: "",
+          systemInstructions: "",
+          temperature: 0,
+          topP: 0,
+          topK: 0,
+          maxOutputTokens: 0,
+          description: "",
+        },
+      });
     }
   }, [configs]);
 
@@ -63,14 +93,35 @@ export const Options: React.FC<{ models: {name:string, displayName:string}[], co
   const [showApiKey, setShowApiKey] = useState(false);
 
   const handleInputChange = (field: keyof Errors, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (field.startsWith('consultant.')) {
+      const consultantField = field.replace('consultant.', '') as keyof Configs['consultant'];
+      setFormData((prev) => ({ 
+        ...prev, 
+        consultant: { 
+          ...(prev.consultant || {}), 
+          [consultantField]: value 
+        } 
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
   const handleToggleChange = (field: keyof Errors, value: boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (field === 'consultant.enabled') {
+      setFormData((prev) => ({
+        ...prev,
+        consultant: {
+          ...(prev.consultant || {}),
+          enabled: value,
+        },
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleSave = async () => {
@@ -86,13 +137,37 @@ export const Options: React.FC<{ models: {name:string, displayName:string}[], co
       topP: formData.topP !== undefined && formData.topP.toString() !== '' ? Number(formData.topP) : undefined,
       topK: formData.topK !== undefined && formData.topK.toString() !== '' ? Number(formData.topK) : undefined,
       maxOutputTokens: formData.maxOutputTokens !== undefined && formData.maxOutputTokens.toString() !== '' ? Number(formData.maxOutputTokens) : undefined,
+      consultant: {
+        enabled: formData.consultant?.enabled || false,
+        model: formData.consultant?.model || '',
+        systemInstructions: formData.consultant?.systemInstructions || '',
+        temperature: formData.consultant?.temperature !== undefined && formData.consultant?.temperature.toString() !== '' ? Number(formData.consultant.temperature) : 0,
+        topP: formData.consultant?.topP !== undefined && formData.consultant?.topP.toString() !== '' ? Number(formData.consultant.topP) : 0,
+        topK: formData.consultant?.topK !== undefined && formData.consultant?.topK.toString() !== '' ? Number(formData.consultant.topK) : 0,
+        maxOutputTokens: formData.consultant?.maxOutputTokens !== undefined && formData.consultant?.maxOutputTokens.toString() !== '' ? Number(formData.consultant.maxOutputTokens) : 0,
+        description: formData.consultant?.description || '',
+      },
       modifiedAt: now(),
     }
 
 
+
+
     const result = ConfigsSchema.safeParse(data);
     if (!result.success) {
-      setErrors(flattenErrors(result.error));
+      console.error('Validation errors:', result.error);
+      const flatErrors = flattenErrors(result.error);
+      setErrors(flatErrors);
+      
+      // Show a general error message with the first validation error
+      const firstError = Object.values(flatErrors).find(err => err);
+      setErrors({
+        ...flatErrors,
+        general: firstError || 'Validation failed. Please check the form.'
+      });
+      setToastMessage('Validation failed. Please check all fields.');
+      setToastType('error');
+      setShowToast(true);
       return;
     }
   
@@ -350,6 +425,207 @@ export const Options: React.FC<{ models: {name:string, displayName:string}[], co
         </Card>
 
         <Card
+          title="Consultant Model Configuration"
+          description="Configure a second AI model (consultant) with independent parameters"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-2 border-b border-gray-200 pb-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Enable Consultant Model
+                </label>
+                <p className="mt-1 text-sm text-gray-500">
+                  Activate the consultant AI model with separate configuration
+                </p>
+              </div>
+              <Switch
+                checked={formData.consultant?.enabled || false}
+                onChange={(value) => handleToggleChange('consultant.enabled', value)}
+                className={`${
+                  formData.consultant?.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+              >
+                <span
+                  className={`${
+                    formData.consultant?.enabled ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </Switch>
+            </div>
+
+            {formData.consultant?.enabled && (
+              <>
+                <Field>
+                  <Label className="block text-sm font-medium text-gray-700">Consultant Model</Label>
+              <select
+                value={formData.consultant?.model || ''}
+                onChange={(e) => handleInputChange('consultant.model', e.target.value)}
+                className={clsx(
+                  'mt-2 block w-full px-4 py-1.5 rounded-lg border transition-all duration-200',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                  errors['consultant.model'] ? 'border-red-300' : 'border-gray-300',
+                )}
+              >
+                <option value="">Select a model</option>
+                {models.map((model) => (
+                  <option key={model.name} value={model.name}>
+                    {model.displayName}
+                  </option>
+                ))}
+              </select>
+              <Description className="mt-1.5 text-sm text-gray-500">
+                Select the AI model to use for the consultant role
+              </Description>
+              {errors['consultant.model'] && (
+                <p className="mt-1.5 text-sm text-red-600">{errors['consultant.model']}</p>
+              )}
+            </Field>
+
+            <Field>
+              <Label className="block text-sm font-medium text-gray-700">Description</Label>
+              <Input
+                type="text"
+                value={formData.consultant?.description || ''}
+                onChange={(e) => handleInputChange('consultant.description', e.target.value)}
+                placeholder="Enter consultant description..."
+                className={clsx(
+                  'mt-2',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                  errors['consultant.description'] ? 'border-red-300' : 'border-gray-300',
+                )}
+              />
+              <Description className="mt-1.5 text-sm text-gray-500">
+                Brief description of the consultant's role and purpose
+              </Description>
+              {errors['consultant.description'] && (
+                <p className="mt-1.5 text-sm text-red-600">{errors['consultant.description']}</p>
+              )}
+            </Field>
+
+            <Field>
+              <Label className="block text-sm font-medium text-gray-700">Consultant System Instructions</Label>
+              <Textarea
+                value={formData.consultant?.systemInstructions || ''}
+                onChange={(e) => handleInputChange('consultant.systemInstructions', e.target.value)}
+                placeholder="Enter system instructions for the consultant AI..."
+                rows={6}
+                className={clsx(
+                  'mt-2 block w-full px-4 py-2.5 rounded-lg border transition-all duration-200 resize-y',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                  errors['consultant.systemInstructions'] ? 'border-red-300' : 'border-gray-300',
+                )}
+              />
+              <Description className="mt-1.5 text-sm text-gray-500">
+                Custom instructions that define the consultant AI's behavior, personality, and context
+              </Description>
+              {errors['consultant.systemInstructions'] && (
+                <p className="mt-1.5 text-sm text-red-600">{errors['consultant.systemInstructions']}</p>
+              )}
+            </Field>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <Label className="block text-sm font-medium text-gray-700">Temperature</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="2"
+                  value={formData.consultant?.temperature ?? ''}
+                  onChange={(e) => handleInputChange('consultant.temperature', e.target.value)}
+                  placeholder="1.0"
+                  className={clsx(
+                    'mt-2',
+                    'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                    errors['consultant.temperature'] ? 'border-red-300' : 'border-gray-300',
+                  )}
+                />
+                <Description className="mt-1.5 text-sm text-gray-500">
+                  Controls creativity (0-2). Lower = more focused, Higher = more creative.
+                </Description>
+                {errors['consultant.temperature'] && (
+                  <p className="mt-1.5 text-sm text-red-600">{errors['consultant.temperature']}</p>
+                )}
+              </Field>
+
+              <Field>
+                <Label className="block text-sm font-medium text-gray-700">Top P</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="1"
+                  value={formData.consultant?.topP ?? ''}
+                  onChange={(e) => handleInputChange('consultant.topP', e.target.value)}
+                  placeholder="0.95"
+                  className={clsx(
+                    'mt-2',
+                    'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                    errors['consultant.topP'] ? 'border-red-300' : 'border-gray-300',
+                  )}
+                />
+                <Description className="mt-1.5 text-sm text-gray-500">
+                  Controls response diversity (0-1). Lower = more predictable, Higher = more diverse.
+                </Description>
+                {errors['consultant.topP'] && (
+                  <p className="mt-1.5 text-sm text-red-600">{errors['consultant.topP']}</p>
+                )}
+              </Field>
+
+              <Field>
+                <Label className="block text-sm font-medium text-gray-700">Top K</Label>
+                <Input
+                  type="number"
+                  step="1"
+                  min="1"
+                  max="100"
+                  value={formData.consultant?.topK ?? ''}
+                  onChange={(e) => handleInputChange('consultant.topK', e.target.value)}
+                  placeholder="40"
+                  className={clsx(
+                    'mt-2',
+                    'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                    errors['consultant.topK'] ? 'border-red-300' : 'border-gray-300',
+                  )}
+                />
+                <Description className="mt-1.5 text-sm text-gray-500">
+                  Limits vocabulary choices (1-100). Lower = more focused, Higher = more variety.
+                </Description>
+                {errors['consultant.topK'] && (
+                  <p className="mt-1.5 text-sm text-red-600">{errors['consultant.topK']}</p>
+                )}
+              </Field>
+
+              <Field>
+                <Label className="block text-sm font-medium text-gray-700">Max Output Tokens</Label>
+                <Input
+                  type="number"
+                  step="1"
+                  min="1"
+                  max="8192"
+                  value={formData.consultant?.maxOutputTokens ?? ''}
+                  onChange={(e) => handleInputChange('consultant.maxOutputTokens', e.target.value)}
+                  placeholder="2048"
+                  className={clsx(
+                    'mt-2',
+                    'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                    errors['consultant.maxOutputTokens'] ? 'border-red-300' : 'border-gray-300',
+                  )}
+                />
+                <Description className="mt-1.5 text-sm text-gray-500">
+                  Maximum response length in tokens (1-65000). Roughly 1 token = 4 characters.
+                </Description>
+                {errors['consultant.maxOutputTokens'] && (
+                  <p className="mt-1.5 text-sm text-red-600">{errors['consultant.maxOutputTokens']}</p>
+                )}
+              </Field>
+            </div>
+            </>
+            )}
+          </div>
+        </Card>
+
+        <Card
           title="Monthly Global Limits"
           description="Set global usage limits for the chatbot"
         >
@@ -455,8 +731,9 @@ export const Options: React.FC<{ models: {name:string, displayName:string}[], co
           </div>
         </Card>
         {errors.general && (
-          <div className="text-red-500 text-sm">
-            {errors.general}
+          <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700 font-medium">Error:</p>
+            <p className="text-red-600 text-sm mt-1">{errors.general}</p>
           </div>
         )}
         <div className="flex items-center justify-between pt-4">
