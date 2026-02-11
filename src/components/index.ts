@@ -7,4 +7,6 @@ export { Header } from './Header';
 export { Modal } from './Modal';
 export { ConfirmDialog } from './ConfirmDialog';
 export { Pagination } from './Pagination';
-
+export { StatCard } from './StatCard';
+export { SimpleChart } from './SimpleChart';
+export { SkeletonLoader, StatCardSkeleton, ChartSkeleton, TableSkeleton } from './SkeletonLoader';

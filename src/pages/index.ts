@@ -6,4 +6,6 @@ export { EditChat } from './EditChat';
 export { System } from './System';
 export { Theme } from './Theme';
 export { Chatbots } from './Chatbots';
-
+export { GeneralDashboard } from './GeneralDashboard';
+export { ChatbotDashboard } from './ChatbotDashboard';
+export { Analytics } from './Analytics';
